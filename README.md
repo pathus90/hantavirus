@@ -2,6 +2,8 @@
 
 React + Vite + Tailwind + Supabase portal for national focal points to submit epidemiological reports.
 
+**Repository:** [github.com/pathus90/hantavirus](https://github.com/pathus90/hantavirus)
+
 ## Setup
 
 ### 1. Supabase project
