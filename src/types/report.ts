@@ -16,6 +16,7 @@ export type HantavirusReport = {
   airplane_contacts: number | null
   airplane_exposure: string | null
   ethics_approval: string | null
+  ethics_approval_date: string | null
   enrolled_participants: number | null
   created_at: string | null
 }
@@ -36,6 +37,7 @@ export type ReportFormData = {
   airplaneContacts: string
   airplaneExposure: string
   ethicsApproval: EthicsApproval
+  ethicsApprovalDate: string
   enrolledParticipants: string
 }
 
@@ -55,5 +57,6 @@ export const emptyFormData = (): ReportFormData => ({
   airplaneContacts: '',
   airplaneExposure: '',
   ethicsApproval: '',
+  ethicsApprovalDate: '',
   enrolledParticipants: '',
 })

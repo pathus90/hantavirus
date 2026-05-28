@@ -92,7 +92,7 @@ function ParticipatingCountriesPanel() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {['Türkiye', 'United Kingdom'].map((c) => (
+        {['Türkiye', 'United Kingdom', 'Switzerland', 'Norway'].map((c) => (
           <span
             key={c}
             className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
@@ -108,7 +108,11 @@ function ParticipatingCountriesPanel() {
         </p>
         <ul className="mt-2 flex flex-wrap gap-2">
           {ADDITIONAL_PARTICIPATING_COUNTRIES.filter(
-            (c) => c !== 'Türkiye' && c !== 'United Kingdom',
+            (c) =>
+              c !== 'Türkiye' &&
+              c !== 'United Kingdom' &&
+              c !== 'Switzerland' &&
+              c !== 'Norway',
           ).map((c) => (
             <li
               key={c}
@@ -145,7 +149,14 @@ export default function HantavirusPortal() {
           ? value
           : ''
         : value
-    setFormData((prev) => ({ ...prev, [name]: next }))
+
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: next }
+      if (name === 'ethicsApproval' && next !== 'yes') {
+        updated.ethicsApprovalDate = ''
+      }
+      return updated
+    })
     setSuccess(null)
   }
 
@@ -183,6 +194,12 @@ export default function HantavirusPortal() {
       return
     }
 
+    if (formData.ethicsApproval === 'yes' && !formData.ethicsApprovalDate) {
+      setError('Please enter the ethics approval date.')
+      setLoading(false)
+      return
+    }
+
     const { error: insertError } = await supabase
       .from('hantavirus_reports')
       .insert([
@@ -201,6 +218,10 @@ export default function HantavirusPortal() {
           airplane_contacts: toNumber(formData.airplaneContacts),
           airplane_exposure: formData.airplaneExposure || null,
           ethics_approval: formData.ethicsApproval || null,
+          ethics_approval_date:
+            formData.ethicsApproval === 'yes'
+              ? formData.ethicsApprovalDate || null
+              : null,
           enrolled_participants: toNumber(formData.enrolledParticipants),
         },
       ])
@@ -534,11 +555,7 @@ export default function HantavirusPortal() {
                 </section>
 
                 <section className="space-y-6">
-                  <SectionHeader n={4} title="Regulatory">
-                    <p className="mt-1 hidden text-sm text-slate-500 sm:block">
-                      Ethics approval and study enrollment
-                    </p>
-                  </SectionHeader>
+                  <SectionHeader n={4} title="Regulatory" />
 
                   <div className="rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/50 to-white p-5 sm:p-6">
                     <fieldset className="space-y-6">
@@ -583,6 +600,26 @@ export default function HantavirusPortal() {
                           })}
                         </div>
                       </div>
+
+                      {formData.ethicsApproval === 'yes' && (
+                        <div className="max-w-md">
+                          <label
+                            htmlFor="ethicsApprovalDate"
+                            className={labelClass}
+                          >
+                            Ethics approval date
+                          </label>
+                          <input
+                            id="ethicsApprovalDate"
+                            type="date"
+                            name="ethicsApprovalDate"
+                            required
+                            value={formData.ethicsApprovalDate}
+                            onChange={handleChange}
+                            className={`${inputClass} mt-1`}
+                          />
+                        </div>
+                      )}
 
                       <div className="max-w-md">
                         <label

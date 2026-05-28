@@ -33,6 +33,8 @@ export const EU_MEMBER_STATES = [
 export const ADDITIONAL_PARTICIPATING_COUNTRIES = [
   'Türkiye',
   'United Kingdom',
+  'Switzerland',
+  'Norway',
   'Canada',
   'New Zealand',
   'United States',
