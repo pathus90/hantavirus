@@ -398,9 +398,9 @@ export default function HantavirusPortal() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {(
                       [
-                        ['totalCases', 'Total number of reported cases'],
+                        ['totalCases', 'Total'],
                         ['confirmedCases', 'Number of confirmed cases'],
-                        ['suspectedCases', 'Number of suspected cases'],
+                        ['suspectedCases', 'Number of contacts'],
                         ['deaths', 'Number of deaths'],
                       ] as const
                     ).map(([name, label]) => (
