@@ -255,12 +255,12 @@ export default function HantavirusPortal() {
             Data collection
           </p>
           <h1 className="font-display text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-            Hantavirus Information Collection Portal
+            Natural History of Andes Virus Infection (NAVIS)
           </h1>
           <p className="mt-3 max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">
-            This portal is intended for national focal points/country
-            correspondents to report and regularly update epidemiological
-            information related to the current Hantavirus outbreak/event.
+            National focal points and country correspondents can use this
+            portal to submit and regularly update epidemiological information
+            for the Natural History of Andes Virus Infection (NAVIS) study.
           </p>
         </header>
 
