@@ -15,6 +15,8 @@ create table if not exists public.hantavirus_reports (
   boat_exposure text,
   airplane_contacts integer,
   airplane_exposure text,
+  ethics_approval text,
+  enrolled_participants integer,
   created_at timestamp with time zone default timezone('utc', now())
 );
 

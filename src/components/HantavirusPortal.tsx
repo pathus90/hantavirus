@@ -138,8 +138,14 @@ export default function HantavirusPortal() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    const next =
+      type === 'checkbox'
+        ? (e.target as HTMLInputElement).checked
+          ? value
+          : ''
+        : value
+    setFormData((prev) => ({ ...prev, [name]: next }))
     setSuccess(null)
   }
 
@@ -194,6 +200,8 @@ export default function HantavirusPortal() {
           boat_exposure: formData.boatExposure || null,
           airplane_contacts: toNumber(formData.airplaneContacts),
           airplane_exposure: formData.airplaneExposure || null,
+          ethics_approval: formData.ethicsApproval || null,
+          enrolled_participants: toNumber(formData.enrolledParticipants),
         },
       ])
 
@@ -522,6 +530,79 @@ export default function HantavirusPortal() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </section>
+
+                <section className="space-y-6">
+                  <SectionHeader n={4} title="Regulatory">
+                    <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+                      Ethics approval and study enrollment
+                    </p>
+                  </SectionHeader>
+
+                  <div className="rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/50 to-white p-5 sm:p-6">
+                    <fieldset className="space-y-6">
+                      <legend className="sr-only">Regulatory information</legend>
+
+                      <div>
+                        <span className={labelClass}>
+                          Status of ethics approval
+                        </span>
+                        <div className="mt-3 flex flex-wrap gap-4">
+                          {(
+                            [
+                              ['yes', 'Yes'],
+                              ['no', 'No'],
+                            ] as const
+                          ).map(([value, label]) => {
+                            const id = `ethicsApproval-${value}`
+                            const checked = formData.ethicsApproval === value
+
+                            return (
+                              <label
+                                key={value}
+                                htmlFor={id}
+                                className={`inline-flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                  checked
+                                    ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/20'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                                }`}
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  name="ethicsApproval"
+                                  value={value}
+                                  checked={checked}
+                                  onChange={handleChange}
+                                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                />
+                                {label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="max-w-md">
+                        <label
+                          htmlFor="enrolledParticipants"
+                          className={labelClass}
+                        >
+                          Number of enrolled participants
+                        </label>
+                        <input
+                          id="enrolledParticipants"
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          name="enrolledParticipants"
+                          value={formData.enrolledParticipants}
+                          onChange={handleChange}
+                          className={`${inputClass} mt-1`}
+                        />
+                      </div>
+                    </fieldset>
                   </div>
                 </section>
 

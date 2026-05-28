@@ -1,3 +1,5 @@
+export type EthicsApproval = '' | 'yes' | 'no'
+
 export type HantavirusReport = {
   id: number
   country: string | null
@@ -13,6 +15,8 @@ export type HantavirusReport = {
   boat_exposure: string | null
   airplane_contacts: number | null
   airplane_exposure: string | null
+  ethics_approval: string | null
+  enrolled_participants: number | null
   created_at: string | null
 }
 
@@ -31,6 +35,8 @@ export type ReportFormData = {
   boatExposure: string
   airplaneContacts: string
   airplaneExposure: string
+  ethicsApproval: EthicsApproval
+  enrolledParticipants: string
 }
 
 export const emptyFormData = (): ReportFormData => ({
@@ -48,4 +54,6 @@ export const emptyFormData = (): ReportFormData => ({
   boatExposure: '',
   airplaneContacts: '',
   airplaneExposure: '',
+  ethicsApproval: '',
+  enrolledParticipants: '',
 })
