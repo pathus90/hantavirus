@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/favicon.png" alt="NAVIS portal icon" width="96" height="96" />
+</p>
+
 # NAVIS — Data Collection Portal (Hantavirus)
 
 Web portal for the **Natural History of Andes Virus Infection (NAVIS)** study: national focal points submit epidemiological data, and an admin dashboard lets authorized users view, filter, chart, and export results.
