@@ -1,6 +1,6 @@
 -- ============================================================
 -- NAVIS — Run this ENTIRE script in Supabase → SQL Editor → Run
--- Project: lldfvbicomlivgxnqiux (or your project)
+-- Replace with your Supabase project reference if needed.
 -- ============================================================
 
 -- 1) Table (safe if already exists)

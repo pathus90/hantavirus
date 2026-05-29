@@ -7,9 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Secrets — never commit real credentials
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
 node_modules
 dist
 dist-ssr
