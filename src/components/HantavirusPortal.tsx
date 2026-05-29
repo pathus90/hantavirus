@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ADDITIONAL_PARTICIPATING_COUNTRIES,
   EU_MEMBER_STATES,
@@ -251,18 +252,42 @@ export default function HantavirusPortal() {
 
       <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10 lg:px-8">
         <header className="mb-8 sm:mb-10">
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-200/80 bg-white/80 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-teal-800 shadow-sm backdrop-blur-sm sm:text-xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-            Data collection
-          </p>
-          <h1 className="font-display text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-            Natural History of Andes Virus Infection (NAVIS)
-          </h1>
-          <p className="mt-3 max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">
-            National focal points and country correspondents can use this
-            portal to submit and regularly update epidemiological information
-            for the Natural History of Andes Virus Infection (NAVIS) study.
-          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-200/80 bg-white/80 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-teal-800 shadow-sm backdrop-blur-sm sm:text-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                Data collection
+              </p>
+              <h1 className="font-display text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+                Natural History of Andes Virus Infection (NAVIS)
+              </h1>
+              <p className="mt-3 max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">
+                National focal points and country correspondents can use this
+                portal to submit and regularly update epidemiological information
+                for the Natural History of Andes Virus Infection (NAVIS) study.
+              </p>
+            </div>
+            <Link
+              to="/admin"
+              className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <svg
+                className="h-4 w-4 text-slate-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              Admin space
+            </Link>
+          </div>
         </header>
 
         {(error || success) && (
