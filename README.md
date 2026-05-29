@@ -1,42 +1,42 @@
-# NAVIS — Portail de collecte (Hantavirus)
+# NAVIS — Data Collection Portal (Hantavirus)
 
-Portail web pour l’étude **Natural History of Andes Virus Infection (NAVIS)** : soumission des données épidémiologiques par les points focaux nationaux, et tableau de bord administrateur pour consulter, filtrer, visualiser et exporter les résultats.
+Web portal for the **Natural History of Andes Virus Infection (NAVIS)** study: national focal points submit epidemiological data, and an admin dashboard lets authorized users view, filter, chart, and export results.
 
-**Dépôt :** [github.com/pathus90/hantavirus](https://github.com/pathus90/hantavirus)
+**Repository:** [github.com/pathus90/hantavirus](https://github.com/pathus90/hantavirus)
 
-## Stack technique
+## Tech stack
 
-| Couche | Technologie |
-|--------|-------------|
+| Layer | Technology |
+|-------|------------|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4 |
-| Données | Supabase (PostgreSQL + Auth + API) |
-| Graphiques admin | Recharts |
-| Export admin | CSV, Excel (xlsx) |
+| Data | Supabase (PostgreSQL + Auth + API) |
+| Admin charts | Recharts |
+| Admin export | CSV, Excel (xlsx) |
 
-## Fonctionnalités
+## Features
 
-### Portail public (`/`)
+### Public portal (`/`)
 
-- Formulaire de collecte (pays, date, données épidémiologiques, expositions, réglementaire)
-- Sélecteur de pays (combobox), sélecteur de date personnalisé
-- **Upsert** : une soumission pour le **même pays** et la **même date de rapport** met à jour le rapport du jour ; sinon création d’un nouveau rapport
-- Lien vers l’espace admin
+- Collection form (country, date, epidemiological data, exposures, regulatory fields)
+- Country combobox and custom date picker
+- **Upsert**: a submission for the **same country** and **same report date** updates that day’s report; otherwise a new report is created
+- Link to the admin area
 
-### Espace admin (`/admin`)
+### Admin area (`/admin`)
 
-- Connexion Supabase Auth (email / mot de passe)
-- Filtres : pays, éthique, plage de dates
-- Indicateurs, graphiques (cas par pays, soumissions dans le temps, éthique, inscrits)
-- Tableau détaillé avec détail des expositions
-- Export CSV / Excel (rapports et jeux agrégés)
-- Déconnexion → retour à l’accueil
+- Supabase Auth sign-in (email / password)
+- Filters: country, ethics approval, date range
+- KPIs and charts (cases by country, submissions over time, ethics, enrolled participants)
+- Detailed table with expandable exposure fields
+- CSV / Excel export (full reports and aggregated datasets)
+- Sign out → redirects to the home page
 
-## Prérequis
+## Prerequisites
 
 - Node.js 20+
-- Un projet [Supabase](https://supabase.com)
+- A [Supabase](https://supabase.com) project
 
-## Installation locale
+## Local setup
 
 ```bash
 git clone https://github.com/pathus90/hantavirus.git
@@ -45,103 +45,103 @@ npm install
 cp .env.example .env
 ```
 
-Renseigner `.env` (voir ci-dessous), puis :
+Fill in `.env` (see below), then:
 
 ```bash
 npm run dev
 ```
 
-Application : [http://localhost:5173](http://localhost:5173)
+App URL: [http://localhost:5173](http://localhost:5173)
 
-## Configuration Supabase
+## Supabase configuration
 
-### 1. Variables d’environnement
+### 1. Environment variables
 
-Copier [`.env.example`](./.env.example) vers `.env` (fichier **local**, non versionné) :
+Copy [`.env.example`](./.env.example) to `.env` (**local file**, not committed):
 
 ```env
-VITE_SUPABASE_URL=https://VOTRE_PROJET.supabase.co
-VITE_SUPABASE_ANON_KEY=votre_cle_anon_publique
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=your_public_anon_key
 ```
 
-Récupérer ces valeurs dans **Project Settings → API** (URL + clé **anon public** uniquement).
+Get these from **Project Settings → API** (project URL + **anon public** key only).
 
-### 2. Base de données
+### 2. Database
 
-Dans **SQL Editor**, exécuter dans l’ordre :
+In **SQL Editor**, run in order:
 
-1. [`supabase/setup-complete.sql`](./supabase/setup-complete.sql) — table, RLS, lecture admin, fonction d’upsert  
-2. Si la base existait déjà sans upsert : [`supabase/migration-upsert-report.sql`](./supabase/migration-upsert-report.sql) (une fois)
+1. [`supabase/setup-complete.sql`](./supabase/setup-complete.sql) — table, RLS, admin read, upsert function  
+2. If the database already existed without upsert: [`supabase/migration-upsert-report.sql`](./supabase/migration-upsert-report.sql) (once)
 
-Autres migrations optionnelles selon l’historique du projet : voir le dossier [`supabase/`](./supabase/).
+Other optional migrations depending on project history: see [`supabase/`](./supabase/).
 
-### 3. Comptes administrateur
+### 3. Admin accounts
 
-Créer les utilisateurs dans **Authentication → Users** (bouton *Add user*, cocher *Auto Confirm User*).
+Create users under **Authentication → Users** (*Add user*, enable *Auto Confirm User*).
 
-Les identifiants admin **ne doivent pas** être stockés dans ce dépôt Git.
+Admin credentials **must not** be stored in this Git repository.
 
-## Sécurité et secrets
+## Security and secrets
 
-| À versionner | À ne **jamais** committer |
-|--------------|---------------------------|
+| Safe to commit | **Never** commit |
+|----------------|------------------|
 | `.env.example` (placeholders) | `.env`, `.env.local`, `.env.production` |
-| Code source | Clé `service_role` Supabase |
-| Scripts SQL | Mots de passe admin, tokens privés |
+| Source code | Supabase `service_role` key |
+| SQL scripts | Admin passwords, private tokens |
 
-- Seule la clé **anon** (publique) est utilisée côté navigateur.
-- La politique RLS limite le public à **INSERT** ; la **lecture** des rapports est réservée aux utilisateurs **authenticated** (admin).
-- L’upsert passe par la fonction SQL `submit_hantavirus_report` (`SECURITY DEFINER`), sans ouvrir `UPDATE` au rôle `anon`.
+- Only the **anon** (public) key is used in the browser.
+- RLS allows the public role **INSERT** only; **SELECT** on reports is limited to **authenticated** users (admin).
+- Upserts go through the `submit_hantavirus_report` SQL function (`SECURITY DEFINER`), without granting `UPDATE` to `anon`.
 
-Avant chaque push, vérifier qu’aucun secret n’est dans le diff :
+Before each push, confirm no secrets appear in the diff:
 
 ```bash
 git status
 git diff
 ```
 
-## Scripts npm
+## npm scripts
 
-| Commande | Description |
-|----------|-------------|
-| `npm run dev` | Serveur de développement |
-| `npm run build` | Build de production |
-| `npm run preview` | Prévisualiser le build |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
 
-## Structure du projet
+## Project structure
 
 ```
 src/
   components/
-    HantavirusPortal.tsx   # Formulaire public
+    HantavirusPortal.tsx   # Public form
     CountryCombobox.tsx
     DatePicker.tsx
     admin/
-      AdminPortal.tsx      # Auth + routage admin
-      AdminDashboard.tsx   # Tableau de bord
+      AdminPortal.tsx      # Auth + admin routing
+      AdminDashboard.tsx   # Dashboard
       AdminLogin.tsx
       adminUtils.ts
       adminExport.ts
   lib/supabase.ts
   types/report.ts
-supabase/                  # Scripts SQL
+supabase/                  # SQL scripts
 ```
 
 ## Routes
 
-| Chemin | Accès |
-|--------|--------|
-| `/` | Public — collecte |
-| `/admin` | Connexion requise — tableau de bord |
+| Path | Access |
+|------|--------|
+| `/` | Public — data collection |
+| `/admin` | Sign-in required — dashboard |
 
-## Déploiement
+## Deployment
 
-1. Build : `npm run build` (sortie dans `dist/`)
-2. Héberger les fichiers statiques (Vercel, Netlify, etc.)
-3. Définir `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` dans les variables d’environnement de la plateforme
-4. S’assurer que les scripts SQL ont été exécutés sur le projet Supabase de production
+1. Build: `npm run build` (output in `dist/`)
+2. Host static files (Vercel, Netlify, etc.)
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the hosting platform’s environment variables
+4. Ensure SQL scripts have been run on the production Supabase project
 
-## Licence
+## License
 
-Projet privé — usage interne NAVIS / collaborateurs autorisés.
+Private project — internal NAVIS use / authorized collaborators only.
