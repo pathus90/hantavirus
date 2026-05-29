@@ -15,7 +15,9 @@ React + Vite + Tailwind + Supabase portal for national focal points to submit ep
 
 ### 2. Database table
 
-In **SQL Editor**, run the script in [`supabase/schema.sql`](./supabase/schema.sql) (includes table + RLS policies for dev).
+In **SQL Editor**, run [`supabase/setup-complete.sql`](./supabase/setup-complete.sql) (table, RLS, admin read, upsert per country/day).
+
+If the project already exists, run [`supabase/migration-upsert-report.sql`](./supabase/migration-upsert-report.sql) once.
 
 ### 3. Local app
 
@@ -32,7 +34,7 @@ Open http://localhost:5173
 ## Features
 
 - Form connected to `hantavirus_reports` (all fields wired with React state)
-- Insert on submit via `@supabase/supabase-js`
+- Upsert on submit: same **country** + **report date** updates the existing row; otherwise a new report is created
 - Live table refresh after each submission
 - Error messages for API / validation failures
 

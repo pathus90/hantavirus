@@ -196,43 +196,63 @@ export default function HantavirusPortal() {
       return
     }
 
+    if (!formData.reportDate) {
+      setError('Please select the date of report/update.')
+      setLoading(false)
+      return
+    }
+
     if (formData.ethicsApproval === 'yes' && !formData.ethicsApprovalDate) {
       setError('Please enter the ethics approval date.')
       setLoading(false)
       return
     }
 
-    const { error: insertError } = await supabase
-      .from('hantavirus_reports')
-      .insert([
-        {
-          country,
-          institution: null,
-          focal_point: null,
-          contact: null,
-          report_date: formData.reportDate || null,
-          total_cases: toNumber(formData.totalCases),
-          confirmed_cases: toNumber(formData.confirmedCases),
-          suspected_cases: toNumber(formData.suspectedCases),
-          deaths: toNumber(formData.deaths),
-          boat_contacts: toNumber(formData.boatContacts),
-          boat_exposure: formData.boatExposure || null,
-          airplane_contacts: toNumber(formData.airplaneContacts),
-          airplane_exposure: formData.airplaneExposure || null,
-          ethics_approval: formData.ethicsApproval || null,
-          ethics_approval_date:
-            formData.ethicsApproval === 'yes'
-              ? formData.ethicsApprovalDate || null
-              : null,
-          enrolled_participants: toNumber(formData.enrolledParticipants),
-        },
-      ])
+    const { data, error: submitError } = await supabase.rpc(
+      'submit_hantavirus_report',
+      {
+        p_country: country,
+        p_report_date: formData.reportDate,
+        p_institution: null,
+        p_focal_point: null,
+        p_contact: null,
+        p_total_cases: toNumber(formData.totalCases),
+        p_confirmed_cases: toNumber(formData.confirmedCases),
+        p_suspected_cases: toNumber(formData.suspectedCases),
+        p_deaths: toNumber(formData.deaths),
+        p_boat_contacts: toNumber(formData.boatContacts),
+        p_boat_exposure: formData.boatExposure || null,
+        p_airplane_contacts: toNumber(formData.airplaneContacts),
+        p_airplane_exposure: formData.airplaneExposure || null,
+        p_ethics_approval: formData.ethicsApproval || null,
+        p_ethics_approval_date:
+          formData.ethicsApproval === 'yes'
+            ? formData.ethicsApprovalDate || null
+            : null,
+        p_enrolled_participants: toNumber(formData.enrolledParticipants),
+      },
+    )
 
-    if (insertError) {
-      setError(insertError.message)
+    if (submitError) {
+      const msg = submitError.message
+      setError(
+        msg.includes('submit_hantavirus_report')
+          ? 'Server setup incomplete: run supabase/migration-upsert-report.sql in Supabase SQL Editor.'
+          : msg,
+      )
     } else {
+      const updated =
+        data &&
+        typeof data === 'object' &&
+        'updated' in data &&
+        Boolean((data as { updated?: boolean }).updated)
+
       setFormData(emptyFormData())
-      setSuccess('Your report has been submitted successfully. Thank you.')
+      setSuccess(
+        updated
+          ? 'Your report for this country and date has been updated. Thank you.'
+          : 'Your report has been submitted successfully. Thank you.',
+      )
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -395,10 +415,15 @@ export default function HantavirusPortal() {
                       <DatePicker
                         id="reportDate"
                         name="reportDate"
+                        required
                         value={formData.reportDate}
                         onChange={handleChange}
                         placeholder="Select report date…"
                       />
+                      <p className="mt-1.5 text-xs text-slate-500">
+                        A new submission for the same country on the same day
+                        replaces that day&apos;s report.
+                      </p>
                     </div>
                   </div>
                 </section>
