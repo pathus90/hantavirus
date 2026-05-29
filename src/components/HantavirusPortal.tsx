@@ -7,6 +7,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { emptyFormData, type ReportFormData } from '../types/report'
 import CountryCombobox from './CountryCombobox'
+import DatePicker from './DatePicker'
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-800 shadow-sm transition placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15 sm:text-sm sm:py-2.5'
@@ -366,13 +367,12 @@ export default function HantavirusPortal() {
                       <label htmlFor="reportDate" className={labelClass}>
                         Date of report/update
                       </label>
-                      <input
+                      <DatePicker
                         id="reportDate"
-                        type="date"
                         name="reportDate"
                         value={formData.reportDate}
                         onChange={handleChange}
-                        className={inputClass}
+                        placeholder="Select report date…"
                       />
                     </div>
                   </div>
@@ -566,14 +566,14 @@ export default function HantavirusPortal() {
                           >
                             Ethics approval date
                           </label>
-                          <input
+                          <DatePicker
                             id="ethicsApprovalDate"
-                            type="date"
                             name="ethicsApprovalDate"
                             required
                             value={formData.ethicsApprovalDate}
                             onChange={handleChange}
-                            className={`${inputClass} mt-1`}
+                            placeholder="Select approval date…"
+                            className="mt-1"
                           />
                         </div>
                       )}

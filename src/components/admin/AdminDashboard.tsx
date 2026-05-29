@@ -16,7 +16,16 @@ import {
   YAxis,
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
+import DatePicker from '../DatePicker'
 import type { HantavirusReport } from '../../types/report'
+import {
+  exportAllExcel,
+  exportCountryCasesCsv,
+  exportEthicsCsv,
+  exportReportsCsv,
+  exportReportsExcel,
+  exportTimelineCsv,
+} from './adminExport'
 import {
   casesByCountry,
   emptyAdminFilters,
@@ -41,6 +50,42 @@ const CHART_COLORS = {
   enrolled: '#6366f1',
   line: '#0d9488',
 }
+
+const CHART_LEGEND_PROPS = {
+  verticalAlign: 'bottom' as const,
+  iconType: 'circle' as const,
+  wrapperStyle: { fontSize: 12, paddingTop: 12 },
+}
+
+type LegendItem = { color: string; label: string; hint?: string }
+
+function ChartLegendNote({ items }: { items: LegendItem[] }) {
+  return (
+    <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+      {items.map((item) => (
+        <li key={item.label} className="flex max-w-sm items-start gap-2">
+          <span
+            className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: item.color }}
+            aria-hidden
+          />
+          <span>
+            <span className="font-medium text-slate-700">{item.label}</span>
+            {item.hint ? (
+              <span className="text-slate-500"> — {item.hint}</span>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+const exportBtnClass =
+  'rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
+
+const exportBtnPrimaryClass =
+  'rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50'
 
 type Props = {
   onLogout: () => void
@@ -257,24 +302,26 @@ export default function AdminDashboard({ onLogout }: Props) {
               <label htmlFor="filter-from" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 From date
               </label>
-              <input
+              <DatePicker
                 id="filter-from"
-                type="date"
                 value={filters.dateFrom}
                 onChange={(e) => updateFilter('dateFrom', e.target.value)}
-                className={`${selectClass} w-full`}
+                placeholder="From…"
+                size="compact"
+                max={filters.dateTo || undefined}
               />
             </div>
             <div>
               <label htmlFor="filter-to" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 To date
               </label>
-              <input
+              <DatePicker
                 id="filter-to"
-                type="date"
                 value={filters.dateTo}
                 onChange={(e) => updateFilter('dateTo', e.target.value)}
-                className={`${selectClass} w-full`}
+                placeholder="To…"
+                size="compact"
+                min={filters.dateFrom || undefined}
               />
             </div>
           </div>
@@ -318,14 +365,103 @@ export default function AdminDashboard({ onLogout }: Props) {
               />
             </div>
 
+            {/* Export */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-slate-800">Export data</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Downloads use the current filters ({filtered.length} report
+                  {filtered.length === 1 ? '' : 's'}).
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-full text-xs font-semibold uppercase tracking-wider text-slate-500 sm:w-auto sm:pr-2">
+                    All datasets
+                  </span>
+                  <button
+                    type="button"
+                    className={exportBtnPrimaryClass}
+                    onClick={() =>
+                      exportAllExcel(filtered, countryCases, timeline, ethicsData)
+                    }
+                  >
+                    Excel (.xlsx) — all sheets
+                  </button>
+                </div>
+                <div className="grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">Reports</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className={exportBtnClass}
+                        onClick={() => exportReportsCsv(filtered)}
+                      >
+                        CSV
+                      </button>
+                      <button
+                        type="button"
+                        className={exportBtnClass}
+                        onClick={() => exportReportsExcel(filtered)}
+                      >
+                        Excel
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">
+                      Cases by country
+                    </p>
+                    <button
+                      type="button"
+                      className={exportBtnClass}
+                      onClick={() => exportCountryCasesCsv(countryCases)}
+                    >
+                      CSV
+                    </button>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">
+                      Submissions timeline
+                    </p>
+                    <button
+                      type="button"
+                      className={exportBtnClass}
+                      onClick={() => exportTimelineCsv(timeline)}
+                      disabled={timeline.length === 0}
+                    >
+                      CSV
+                    </button>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">
+                      Ethics approval
+                    </p>
+                    <button
+                      type="button"
+                      className={exportBtnClass}
+                      onClick={() => exportEthicsCsv(ethicsData)}
+                      disabled={ethicsData.length === 0}
+                    >
+                      CSV
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Charts */}
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <ChartCard title="Cases by country" className="xl:col-span-2">
+                <p className="-mt-2 mb-3 text-xs text-slate-500">
+                  Aggregated case counts per country (filtered reports).
+                </p>
                 <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={countryCases}
-                      margin={{ top: 8, right: 8, left: 0, bottom: 60 }}
+                      margin={{ top: 8, right: 8, left: 8, bottom: 72 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis
@@ -335,8 +471,22 @@ export default function AdminDashboard({ onLogout }: Props) {
                         textAnchor="end"
                         interval={0}
                         height={70}
+                        label={{
+                          value: 'Country',
+                          position: 'insideBottom',
+                          offset: -4,
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
                       />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        label={{
+                          value: 'Number of cases',
+                          angle: -90,
+                          position: 'insideLeft',
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
+                      />
                       <Tooltip
                         contentStyle={{
                           borderRadius: '12px',
@@ -344,10 +494,10 @@ export default function AdminDashboard({ onLogout }: Props) {
                           fontSize: '13px',
                         }}
                       />
-                      <Legend />
+                      <Legend {...CHART_LEGEND_PROPS} />
                       <Bar
                         dataKey="total"
-                        name="Total"
+                        name="Total cases"
                         fill={CHART_COLORS.total}
                         radius={[4, 4, 0, 0]}
                       />
@@ -372,23 +522,62 @@ export default function AdminDashboard({ onLogout }: Props) {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+                <ChartLegendNote
+                  items={[
+                    {
+                      color: CHART_COLORS.total,
+                      label: 'Total cases',
+                      hint: 'sum of reported cases',
+                    },
+                    {
+                      color: CHART_COLORS.confirmed,
+                      label: 'Confirmed',
+                      hint: 'laboratory-confirmed',
+                    },
+                    {
+                      color: CHART_COLORS.suspected,
+                      label: 'Contacts',
+                      hint: 'suspected or contact cases',
+                    },
+                    {
+                      color: CHART_COLORS.deaths,
+                      label: 'Deaths',
+                      hint: 'reported fatalities',
+                    },
+                  ]}
+                />
               </ChartCard>
 
               <ChartCard title="Submissions over time">
+                <p className="-mt-2 mb-3 text-xs text-slate-500">
+                  Number of reports submitted per report date.
+                </p>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={timeline}
-                      margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                      margin={{ top: 8, right: 8, left: 8, bottom: 28 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 10, fill: '#64748b' }}
+                        label={{
+                          value: 'Report date',
+                          position: 'insideBottom',
+                          offset: -4,
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
                       />
                       <YAxis
                         allowDecimals={false}
                         tick={{ fontSize: 11, fill: '#64748b' }}
+                        label={{
+                          value: 'Reports',
+                          angle: -90,
+                          position: 'insideLeft',
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
                       />
                       <Tooltip
                         contentStyle={{
@@ -397,10 +586,11 @@ export default function AdminDashboard({ onLogout }: Props) {
                           fontSize: '13px',
                         }}
                       />
+                      <Legend {...CHART_LEGEND_PROPS} />
                       <Line
                         type="monotone"
                         dataKey="reports"
-                        name="Reports"
+                        name="Reports submitted"
                         stroke={CHART_COLORS.line}
                         strokeWidth={2}
                         dot={{ fill: CHART_COLORS.line, r: 4 }}
@@ -409,9 +599,21 @@ export default function AdminDashboard({ onLogout }: Props) {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+                <ChartLegendNote
+                  items={[
+                    {
+                      color: CHART_COLORS.line,
+                      label: 'Reports submitted',
+                      hint: 'one point per calendar day',
+                    },
+                  ]}
+                />
               </ChartCard>
 
               <ChartCard title="Ethics approval status">
+                <p className="-mt-2 mb-3 text-xs text-slate-500">
+                  Distribution of ethics approval answers across filtered reports.
+                </p>
                 <div className="h-64 w-full">
                   {ethicsData.length === 0 ? (
                     <p className="flex h-full items-center justify-center text-sm text-slate-400">
@@ -419,45 +621,71 @@ export default function AdminDashboard({ onLogout }: Props) {
                     </p>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart margin={{ top: 0, right: 0, bottom: 24, left: 0 }}>
                         <Pie
                           data={ethicsData}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
-                          cy="50%"
+                          cy="45%"
                           innerRadius={50}
                           outerRadius={80}
                           paddingAngle={3}
-                          label={({ name, value }) => `${name}: ${value}`}
                         >
                           {ethicsData.map((entry) => (
                             <Cell key={entry.name} fill={entry.fill} />
                           ))}
                         </Pie>
                         <Tooltip />
-                        <Legend />
+                        <Legend {...CHART_LEGEND_PROPS} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
                 </div>
+                {ethicsData.length > 0 && (
+                  <ChartLegendNote
+                    items={ethicsData.map((e) => ({
+                      color: e.fill,
+                      label: e.name,
+                      hint: `${e.value} report${e.value === 1 ? '' : 's'}`,
+                    }))}
+                  />
+                )}
               </ChartCard>
 
               <ChartCard title="Enrolled participants by country" className="xl:col-span-2">
+                <p className="-mt-2 mb-3 text-xs text-slate-500">
+                  Countries with at least one enrolled participant (filtered data).
+                </p>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={countryCases.filter((c) => c.enrolled > 0)}
                       layout="vertical"
-                      margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+                      margin={{ top: 8, right: 16, left: 8, bottom: 28 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        label={{
+                          value: 'Enrolled participants',
+                          position: 'insideBottom',
+                          offset: -4,
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
+                      />
                       <YAxis
                         type="category"
                         dataKey="country"
                         width={100}
                         tick={{ fontSize: 11, fill: '#64748b' }}
+                        label={{
+                          value: 'Country',
+                          angle: -90,
+                          position: 'insideLeft',
+                          style: { fontSize: 11, fill: '#94a3b8' },
+                        }}
                       />
                       <Tooltip
                         contentStyle={{
@@ -466,27 +694,55 @@ export default function AdminDashboard({ onLogout }: Props) {
                           fontSize: '13px',
                         }}
                       />
+                      <Legend {...CHART_LEGEND_PROPS} />
                       <Bar
                         dataKey="enrolled"
-                        name="Enrolled"
+                        name="Enrolled participants"
                         fill={CHART_COLORS.enrolled}
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+                <ChartLegendNote
+                  items={[
+                    {
+                      color: CHART_COLORS.enrolled,
+                      label: 'Enrolled participants',
+                      hint: 'study enrollment count per country',
+                    },
+                  ]}
+                />
               </ChartCard>
             </div>
 
             {/* Table */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-5 py-4">
-                <h2 className="text-sm font-semibold text-slate-800">
-                  Report details
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Click a row to expand exposure details
-                </p>
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-800">
+                    Report details
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Click a row to expand exposure details
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={exportBtnClass}
+                    onClick={() => exportReportsCsv(filtered)}
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    className={exportBtnClass}
+                    onClick={() => exportReportsExcel(filtered)}
+                  >
+                    Export Excel
+                  </button>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-xs sm:text-sm">
