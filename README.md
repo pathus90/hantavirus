@@ -155,6 +155,13 @@ When contributing:
 - Do not commit secrets (`.env`, passwords, `service_role` keys, or real patient data).
 - Match existing code style and keep changes focused.
 - Update the README if you change setup, routes, or Supabase scripts.
+- Enable repo git hooks (strips accidental `Co-authored-by: Cursor` trailers):
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Also disable **Add co-author to commits** in Cursor settings if you do not want Cursor listed on GitHub.
 
 ## License
 
