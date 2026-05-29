@@ -142,6 +142,16 @@ supabase/                  # SQL scripts
 3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the hosting platform’s environment variables
 4. Ensure SQL scripts have been run on the production Supabase project
 
+## Contributing
+
+Please read our [Contributor Code of Conduct](./CODE_OF_CONDUCT.md) before opening issues or pull requests.
+
+When contributing:
+
+- Do not commit secrets (`.env`, passwords, `service_role` keys, or real patient data).
+- Match existing code style and keep changes focused.
+- Update the README if you change setup, routes, or Supabase scripts.
+
 ## License
 
 Private project — internal NAVIS use / authorized collaborators only.
