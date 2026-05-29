@@ -24,14 +24,14 @@ create table if not exists public.hantavirus_reports (
 -- Dev: allow anon read/write (tighten for production with RLS + auth)
 alter table public.hantavirus_reports enable row level security;
 
-create policy "Allow public read"
-  on public.hantavirus_reports
-  for select
-  to anon, authenticated
-  using (true);
-
 create policy "Allow public insert"
   on public.hantavirus_reports
   for insert
   to anon, authenticated
   with check (true);
+
+create policy "Allow authenticated read"
+  on public.hantavirus_reports
+  for select
+  to authenticated
+  using (true);

@@ -24,9 +24,6 @@ export type HantavirusReport = {
 export type ReportFormData = {
   country: string
   countryOther: string
-  institution: string
-  focalPoint: string
-  contact: string
   reportDate: string
   totalCases: string
   confirmedCases: string
@@ -44,9 +41,6 @@ export type ReportFormData = {
 export const emptyFormData = (): ReportFormData => ({
   country: '',
   countryOther: '',
-  institution: '',
-  focalPoint: '',
-  contact: '',
   reportDate: '',
   totalCases: '',
   confirmedCases: '',

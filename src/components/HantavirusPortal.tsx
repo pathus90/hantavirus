@@ -205,9 +205,9 @@ export default function HantavirusPortal() {
       .insert([
         {
           country,
-          institution: formData.institution || null,
-          focal_point: formData.focalPoint || null,
-          contact: formData.contact || null,
+          institution: null,
+          focal_point: null,
+          contact: null,
           report_date: formData.reportDate || null,
           total_cases: toNumber(formData.totalCases),
           confirmed_cases: toNumber(formData.confirmedCases),
@@ -329,7 +329,7 @@ export default function HantavirusPortal() {
                 <section className="space-y-6">
                   <SectionHeader n={1} title="General Country Information">
                     <p className="mt-1 hidden text-sm text-slate-500 sm:block">
-                      Country, institution, focal point and report date
+                      Country and report date
                     </p>
                   </SectionHeader>
 
@@ -361,49 +361,6 @@ export default function HantavirusPortal() {
                         />
                       </div>
                     )}
-
-                    <div className="sm:col-span-2">
-                      <label htmlFor="institution" className={labelClass}>
-                        Reporting institution/authority
-                      </label>
-                      <input
-                        id="institution"
-                        type="text"
-                        name="institution"
-                        value={formData.institution}
-                        onChange={handleChange}
-                        className={inputClass}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="focalPoint" className={labelClass}>
-                        Name of focal point
-                      </label>
-                      <input
-                        id="focalPoint"
-                        type="text"
-                        name="focalPoint"
-                        value={formData.focalPoint}
-                        onChange={handleChange}
-                        className={inputClass}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="contact" className={labelClass}>
-                        Contact details of focal point
-                      </label>
-                      <input
-                        id="contact"
-                        type="text"
-                        name="contact"
-                        value={formData.contact}
-                        onChange={handleChange}
-                        placeholder="Email, phone…"
-                        className={inputClass}
-                      />
-                    </div>
 
                     <div className="sm:col-span-2 sm:max-w-xs">
                       <label htmlFor="reportDate" className={labelClass}>
