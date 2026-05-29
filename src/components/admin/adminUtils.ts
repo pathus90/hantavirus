@@ -1,8 +1,15 @@
 import type { HantavirusReport } from '../../types/report'
+import {
+  ETHICS_LABELS,
+  normalizeEthics,
+  reportCasesTotal,
+  reportDeathsTotal,
+} from '../../types/report'
 
 export type AdminFilters = {
   country: string
   ethics: string
+  protocol: string
   dateFrom: string
   dateTo: string
 }
@@ -10,6 +17,7 @@ export type AdminFilters = {
 export const emptyAdminFilters = (): AdminFilters => ({
   country: '',
   ethics: '',
+  protocol: '',
   dateFrom: '',
   dateTo: '',
 })
@@ -25,8 +33,12 @@ export function filterReports(
   return reports.filter((r) => {
     if (filters.country && r.country !== filters.country) return false
 
+    if (filters.protocol && (r.study_protocol ?? 'navis') !== filters.protocol) {
+      return false
+    }
+
     if (filters.ethics) {
-      const v = (r.ethics_approval ?? '').toLowerCase()
+      const v = normalizeEthics(r.ethics_approval)
       if (filters.ethics === 'unset' && v) return false
       if (filters.ethics !== 'unset' && v !== filters.ethics) return false
     }
@@ -52,11 +64,20 @@ export function sumField(
   return reports.reduce((s, r) => s + (Number(r[field]) || 0), 0)
 }
 
+export function sumCases(reports: HantavirusReport[]): number {
+  return reports.reduce((s, r) => s + reportCasesTotal(r), 0)
+}
+
+export function sumDeaths(reports: HantavirusReport[]): number {
+  return reports.reduce((s, r) => s + reportDeathsTotal(r), 0)
+}
+
 export type CountryCaseRow = {
   country: string
-  total: number
   confirmed: number
   suspected: number
+  deathsCases: number
+  deathsContacts: number
   deaths: number
   enrolled: number
 }
@@ -68,42 +89,54 @@ export function casesByCountry(reports: HantavirusReport[]): CountryCaseRow[] {
     const country = r.country ?? 'Unknown'
     const row = map.get(country) ?? {
       country,
-      total: 0,
       confirmed: 0,
       suspected: 0,
+      deathsCases: 0,
+      deathsContacts: 0,
       deaths: 0,
       enrolled: 0,
     }
-    row.total += r.total_cases ?? 0
     row.confirmed += r.confirmed_cases ?? 0
     row.suspected += r.suspected_cases ?? 0
-    row.deaths += r.deaths ?? 0
+    row.deathsCases += r.deaths_cases ?? 0
+    row.deathsContacts += r.deaths_contacts ?? 0
+    row.deaths += reportDeathsTotal(r)
     row.enrolled += r.enrolled_participants ?? 0
     map.set(country, row)
   }
 
-  return [...map.values()].sort((a, b) => b.total - a.total)
+  return [...map.values()].sort(
+    (a, b) => b.confirmed + b.suspected - (a.confirmed + a.suspected),
+  )
 }
 
 export type EthicsSlice = { name: string; value: number; fill: string }
 
+const ETHICS_COLORS: Record<string, string> = {
+  approved: '#0d9488',
+  submitted: '#6366f1',
+  in_preparation: '#f59e0b',
+  unset: '#cbd5e1',
+}
+
 export function ethicsBreakdown(reports: HantavirusReport[]): EthicsSlice[] {
-  let yes = 0
-  let no = 0
-  let unset = 0
+  const counts = new Map<string, number>()
 
   for (const r of reports) {
-    const v = (r.ethics_approval ?? '').toLowerCase()
-    if (v === 'yes') yes++
-    else if (v === 'no') no++
-    else unset++
+    const v = normalizeEthics(r.ethics_approval)
+    const key = v || 'unset'
+    counts.set(key, (counts.get(key) ?? 0) + 1)
   }
 
-  return [
-    { name: 'Yes', value: yes, fill: '#0d9488' },
-    { name: 'No', value: no, fill: '#64748b' },
-    { name: 'Not set', value: unset, fill: '#cbd5e1' },
-  ].filter((x) => x.value > 0)
+  const order = ['approved', 'submitted', 'in_preparation', 'unset']
+
+  return order
+    .filter((k) => (counts.get(k) ?? 0) > 0)
+    .map((k) => ({
+      name: k === 'unset' ? 'Not set' : (ETHICS_LABELS[k] ?? k),
+      value: counts.get(k) ?? 0,
+      fill: ETHICS_COLORS[k] ?? '#64748b',
+    }))
 }
 
 export type TimelinePoint = { date: string; reports: number }
@@ -130,4 +163,15 @@ export function fmt(value: string | number | null | undefined): string {
 export function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
   return value.slice(0, 10)
+}
+
+export function fmtEthics(value: string | null | undefined): string {
+  const v = normalizeEthics(value)
+  if (!v) return '—'
+  return ETHICS_LABELS[v] ?? v
+}
+
+export function fmtProtocol(value: string | null | undefined): string {
+  const v = value ?? 'navis'
+  return v === 'isaric' ? 'ISARIC' : 'NAVIS'
 }

@@ -21,15 +21,15 @@ Web portal for the **Natural History of Andes Virus Infection (NAVIS)** study: n
 
 ### Public portal (`/`)
 
-- Collection form (country, date, epidemiological data, exposures, regulatory fields)
-- Country combobox and custom date picker
-- **Upsert**: a submission for the **same country** and **same report date** updates that day’s report; otherwise a new report is created
+- Collection form (country, epidemiological data, exposures, regulatory fields)
+- Country combobox
+- **Upsert**: a submission for the **same country** on the **same day** updates that day’s report; otherwise a new report is created
 - Link to the admin area
 
 ### Admin area (`/admin`)
 
 - Supabase Auth sign-in (email / password)
-- Filters: country, ethics approval, date range
+- Filters: country, ethics approval, reporting period
 - KPIs and charts (cases by country, submissions over time, ethics, enrolled participants)
 - Detailed table with expandable exposure fields
 - CSV / Excel export (full reports and aggregated datasets)
@@ -120,7 +120,6 @@ src/
   components/
     HantavirusPortal.tsx   # Public form
     CountryCombobox.tsx
-    DatePicker.tsx
     admin/
       AdminPortal.tsx      # Auth + admin routing
       AdminDashboard.tsx   # Dashboard
@@ -155,13 +154,6 @@ When contributing:
 - Do not commit secrets (`.env`, passwords, `service_role` keys, or real patient data).
 - Match existing code style and keep changes focused.
 - Update the README if you change setup, routes, or Supabase scripts.
-- Enable repo git hooks (strips accidental `Co-authored-by: Cursor` trailers):
-
-```bash
-git config core.hooksPath .githooks
-```
-
-Also disable **Add co-author to commits** in Cursor settings if you do not want Cursor listed on GitHub.
 
 ## License
 

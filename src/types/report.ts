@@ -1,4 +1,10 @@
-export type EthicsApproval = '' | 'yes' | 'no'
+export type StudyProtocol = 'navis' | 'isaric'
+
+export type EthicsApproval =
+  | ''
+  | 'in_preparation'
+  | 'submitted'
+  | 'approved'
 
 export type HantavirusReport = {
   id: number
@@ -7,10 +13,13 @@ export type HantavirusReport = {
   focal_point: string | null
   contact: string | null
   report_date: string | null
+  study_protocol: string | null
   total_cases: number | null
   confirmed_cases: number | null
   suspected_cases: number | null
   deaths: number | null
+  deaths_cases: number | null
+  deaths_contacts: number | null
   boat_contacts: number | null
   boat_exposure: string | null
   airplane_contacts: number | null
@@ -24,11 +33,12 @@ export type HantavirusReport = {
 export type ReportFormData = {
   country: string
   countryOther: string
+  studyProtocol: StudyProtocol | ''
   reportDate: string
-  totalCases: string
   confirmedCases: string
   suspectedCases: string
-  deaths: string
+  deathsCases: string
+  deathsContacts: string
   boatContacts: string
   boatExposure: string
   airplaneContacts: string
@@ -41,11 +51,12 @@ export type ReportFormData = {
 export const emptyFormData = (): ReportFormData => ({
   country: '',
   countryOther: '',
+  studyProtocol: 'navis',
   reportDate: '',
-  totalCases: '',
   confirmedCases: '',
   suspectedCases: '',
-  deaths: '',
+  deathsCases: '',
+  deathsContacts: '',
   boatContacts: '',
   boatExposure: '',
   airplaneContacts: '',
@@ -54,3 +65,35 @@ export const emptyFormData = (): ReportFormData => ({
   ethicsApprovalDate: '',
   enrolledParticipants: '',
 })
+
+export const ETHICS_LABELS: Record<string, string> = {
+  in_preparation: 'In preparation',
+  submitted: 'Submitted',
+  approved: 'Approved',
+  yes: 'Approved',
+  no: 'In preparation',
+}
+
+export const PROTOCOL_LABELS: Record<string, string> = {
+  navis: 'NAVIS',
+  isaric: 'ISARIC Hantavirus protocol',
+}
+
+export function reportDeathsTotal(r: HantavirusReport): number {
+  const fromSplit = (r.deaths_cases ?? 0) + (r.deaths_contacts ?? 0)
+  if (fromSplit > 0) return fromSplit
+  return r.deaths ?? 0
+}
+
+export function reportCasesTotal(r: HantavirusReport): number {
+  const computed = (r.confirmed_cases ?? 0) + (r.suspected_cases ?? 0)
+  if (computed > 0) return computed
+  return r.total_cases ?? 0
+}
+
+export function normalizeEthics(value: string | null | undefined): string {
+  const v = (value ?? '').toLowerCase()
+  if (v === 'yes') return 'approved'
+  if (v === 'no') return 'in_preparation'
+  return v
+}

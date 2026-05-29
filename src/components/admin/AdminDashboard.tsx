@@ -33,7 +33,10 @@ import {
   filterReports,
   fmt,
   fmtDate,
+  fmtEthics,
+  fmtProtocol,
   submissionsTimeline,
+  sumDeaths,
   sumField,
   uniqueCountries,
   type AdminFilters,
@@ -43,10 +46,10 @@ const selectClass =
   'rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15'
 
 const CHART_COLORS = {
-  total: '#0f766e',
   confirmed: '#14b8a6',
   suspected: '#f59e0b',
-  deaths: '#ef4444',
+  deathsCases: '#ef4444',
+  deathsContacts: '#dc2626',
   enrolled: '#6366f1',
   line: '#0d9488',
 }
@@ -176,6 +179,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const hasActiveFilters =
     filters.country ||
     filters.ethics ||
+    filters.protocol ||
     filters.dateFrom ||
     filters.dateTo
 
@@ -263,7 +267,7 @@ export default function AdminDashboard({ onLogout }: Props) {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <div>
               <label htmlFor="filter-country" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Country
@@ -283,8 +287,23 @@ export default function AdminDashboard({ onLogout }: Props) {
               </select>
             </div>
             <div>
+              <label htmlFor="filter-protocol" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Protocol
+              </label>
+              <select
+                id="filter-protocol"
+                value={filters.protocol}
+                onChange={(e) => updateFilter('protocol', e.target.value)}
+                className={`${selectClass} w-full`}
+              >
+                <option value="">All</option>
+                <option value="navis">NAVIS</option>
+                <option value="isaric">ISARIC</option>
+              </select>
+            </div>
+            <div>
               <label htmlFor="filter-ethics" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Ethics approval
+                Ethics status
               </label>
               <select
                 id="filter-ethics"
@@ -293,8 +312,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                 className={`${selectClass} w-full`}
               >
                 <option value="">All</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+                <option value="approved">Approved</option>
+                <option value="submitted">Submitted</option>
+                <option value="in_preparation">In preparation</option>
                 <option value="unset">Not set</option>
               </select>
             </div>
@@ -344,20 +364,18 @@ export default function AdminDashboard({ onLogout }: Props) {
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
               <StatCard label="Reports" value={filtered.length} />
+              <StatCard label="Countries" value={countryCases.length} />
               <StatCard
-                label="Countries"
-                value={countryCases.length}
+                label="Confirmed (PCR+)"
+                value={sumField(filtered, 'confirmed_cases')}
               />
               <StatCard
-                label="Total cases"
-                value={sumField(filtered, 'total_cases')}
+                label="Contacts (PCR−)"
+                value={sumField(filtered, 'suspected_cases')}
               />
-              <StatCard
-                label="Deaths"
-                value={sumField(filtered, 'deaths')}
-              />
+              <StatCard label="Deaths" value={sumDeaths(filtered)} />
               <StatCard
                 label="Enrolled"
                 value={sumField(filtered, 'enrolled_participants')}
@@ -496,27 +514,27 @@ export default function AdminDashboard({ onLogout }: Props) {
                       />
                       <Legend {...CHART_LEGEND_PROPS} />
                       <Bar
-                        dataKey="total"
-                        name="Total cases"
-                        fill={CHART_COLORS.total}
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
                         dataKey="confirmed"
-                        name="Confirmed"
+                        name="Confirmed (PCR+)"
                         fill={CHART_COLORS.confirmed}
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar
                         dataKey="suspected"
-                        name="Contacts"
+                        name="Contacts (PCR−)"
                         fill={CHART_COLORS.suspected}
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar
-                        dataKey="deaths"
-                        name="Deaths"
-                        fill={CHART_COLORS.deaths}
+                        dataKey="deathsCases"
+                        name="Deaths (cases)"
+                        fill={CHART_COLORS.deathsCases}
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="deathsContacts"
+                        name="Deaths (contacts)"
+                        fill={CHART_COLORS.deathsContacts}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -525,24 +543,24 @@ export default function AdminDashboard({ onLogout }: Props) {
                 <ChartLegendNote
                   items={[
                     {
-                      color: CHART_COLORS.total,
-                      label: 'Total cases',
-                      hint: 'sum of reported cases',
-                    },
-                    {
                       color: CHART_COLORS.confirmed,
-                      label: 'Confirmed',
-                      hint: 'laboratory-confirmed',
+                      label: 'Confirmed (PCR+)',
+                      hint: 'laboratory-confirmed cases',
                     },
                     {
                       color: CHART_COLORS.suspected,
-                      label: 'Contacts',
-                      hint: 'suspected or contact cases',
+                      label: 'Contacts (PCR−)',
+                      hint: 'contact cases',
                     },
                     {
-                      color: CHART_COLORS.deaths,
-                      label: 'Deaths',
-                      hint: 'reported fatalities',
+                      color: CHART_COLORS.deathsCases,
+                      label: 'Deaths among cases',
+                      hint: 'fatalities in PCR+ cases',
+                    },
+                    {
+                      color: CHART_COLORS.deathsContacts,
+                      label: 'Deaths among contacts',
+                      hint: 'fatalities in PCR− contacts',
                     },
                   ]}
                 />
@@ -749,11 +767,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-600">
                       <th className="px-4 py-3">Country</th>
+                      <th className="px-4 py-3">Protocol</th>
                       <th className="px-4 py-3">Report date</th>
-                      <th className="px-4 py-3 text-right">Total</th>
-                      <th className="px-4 py-3 text-right">Confirmed</th>
-                      <th className="px-4 py-3 text-right">Contacts</th>
-                      <th className="px-4 py-3 text-right">Deaths</th>
+                      <th className="px-4 py-3 text-right">PCR+</th>
+                      <th className="px-4 py-3 text-right">PCR−</th>
+                      <th className="px-4 py-3 text-right">Deaths (cases)</th>
+                      <th className="px-4 py-3 text-right">Deaths (contacts)</th>
                       <th className="px-4 py-3 text-right">Boat</th>
                       <th className="px-4 py-3 text-right">Air</th>
                       <th className="px-4 py-3">Ethics</th>
@@ -777,10 +796,10 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmt(r.country)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                            {fmtDate(r.report_date)}
+                            {fmtProtocol(r.study_protocol)}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums font-medium">
-                            {fmt(r.total_cases)}
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                            {fmtDate(r.report_date)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-teal-800">
                             {fmt(r.confirmed_cases)}
@@ -789,7 +808,10 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmt(r.suspected_cases)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {fmt(r.deaths)}
+                            {fmt(r.deaths_cases)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {fmt(r.deaths_contacts)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.boat_contacts)}
@@ -797,8 +819,8 @@ export default function AdminDashboard({ onLogout }: Props) {
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.airplane_contacts)}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 capitalize">
-                            {fmt(r.ethics_approval)}
+                          <td className="whitespace-nowrap px-4 py-3">
+                            {fmtEthics(r.ethics_approval)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                             {fmtDate(r.ethics_approval_date)}
@@ -812,7 +834,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={12} className="px-4 py-4">
+                            <td colSpan={14} className="px-4 py-4">
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">

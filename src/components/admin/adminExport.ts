@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx'
 import type { HantavirusReport } from '../../types/report'
 import type { CountryCaseRow, EthicsSlice, TimelinePoint } from './adminUtils'
-import { fmtDate } from './adminUtils'
+import { fmtDate, fmtEthics, fmtProtocol } from './adminUtils'
 
 export type ExportSheet = {
   name: string
@@ -63,19 +63,20 @@ export function reportRows(reports: HantavirusReport[]) {
   return reports.map((r) => ({
     ID: r.id,
     Country: r.country ?? '',
+    Protocol: fmtProtocol(r.study_protocol),
     Institution: r.institution ?? '',
     'Focal point': r.focal_point ?? '',
     Contact: r.contact ?? '',
     'Report date': fmtDate(r.report_date) === '—' ? '' : fmtDate(r.report_date),
-    'Total cases': r.total_cases ?? '',
-    'Confirmed cases': r.confirmed_cases ?? '',
-    'Contact cases': r.suspected_cases ?? '',
-    Deaths: r.deaths ?? '',
+    'Confirmed cases (PCR+)': r.confirmed_cases ?? '',
+    'Contacts (PCR−)': r.suspected_cases ?? '',
+    'Deaths (cases PCR+)': r.deaths_cases ?? '',
+    'Deaths (contacts PCR−)': r.deaths_contacts ?? '',
     'Boat contacts': r.boat_contacts ?? '',
     'Maritime exposure': r.boat_exposure ?? '',
     'Air contacts': r.airplane_contacts ?? '',
     'Air travel exposure': r.airplane_exposure ?? '',
-    'Ethics approval': r.ethics_approval ?? '',
+    'Ethics status': fmtEthics(r.ethics_approval),
     'Ethics approval date':
       fmtDate(r.ethics_approval_date) === '—' ? '' : fmtDate(r.ethics_approval_date),
     'Enrolled participants': r.enrolled_participants ?? '',
@@ -86,10 +87,11 @@ export function reportRows(reports: HantavirusReport[]) {
 export function countryCaseRows(rows: CountryCaseRow[]) {
   return rows.map((r) => ({
     Country: r.country,
-    'Total cases': r.total,
-    'Confirmed cases': r.confirmed,
-    'Contact cases': r.suspected,
-    Deaths: r.deaths,
+    'Confirmed (PCR+)': r.confirmed,
+    'Contacts (PCR−)': r.suspected,
+    'Deaths (cases)': r.deathsCases,
+    'Deaths (contacts)': r.deathsContacts,
+    'Deaths (total)': r.deaths,
     'Enrolled participants': r.enrolled,
   }))
 }

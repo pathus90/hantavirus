@@ -154,7 +154,7 @@ export default function HantavirusPortal() {
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: next }
-      if (name === 'ethicsApproval' && next !== 'yes') {
+      if (name === 'ethicsApproval' && next !== 'approved') {
         updated.ethicsApprovalDate = ''
       }
       return updated
@@ -202,7 +202,7 @@ export default function HantavirusPortal() {
       return
     }
 
-    if (formData.ethicsApproval === 'yes' && !formData.ethicsApprovalDate) {
+    if (formData.ethicsApproval === 'approved' && !formData.ethicsApprovalDate) {
       setError('Please enter the ethics approval date.')
       setLoading(false)
       return
@@ -213,20 +213,21 @@ export default function HantavirusPortal() {
       {
         p_country: country,
         p_report_date: formData.reportDate,
+        p_study_protocol: formData.studyProtocol || 'navis',
         p_institution: null,
         p_focal_point: null,
         p_contact: null,
-        p_total_cases: toNumber(formData.totalCases),
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
-        p_deaths: toNumber(formData.deaths),
+        p_deaths_cases: toNumber(formData.deathsCases),
+        p_deaths_contacts: toNumber(formData.deathsContacts),
         p_boat_contacts: toNumber(formData.boatContacts),
         p_boat_exposure: formData.boatExposure || null,
         p_airplane_contacts: toNumber(formData.airplaneContacts),
         p_airplane_exposure: formData.airplaneExposure || null,
         p_ethics_approval: formData.ethicsApproval || null,
         p_ethics_approval_date:
-          formData.ethicsApproval === 'yes'
+          formData.ethicsApproval === 'approved'
             ? formData.ethicsApprovalDate || null
             : null,
         p_enrolled_participants: toNumber(formData.enrolledParticipants),
@@ -236,8 +237,10 @@ export default function HantavirusPortal() {
     if (submitError) {
       const msg = submitError.message
       setError(
-        msg.includes('submit_hantavirus_report')
-          ? 'Server setup incomplete: run supabase/migration-upsert-report.sql in Supabase SQL Editor.'
+        msg.includes('submit_hantavirus_report') ||
+          msg.includes('p_study_protocol') ||
+          msg.includes('p_deaths_cases')
+          ? 'Server setup incomplete: run supabase/migration-regulatory-v2.sql in Supabase SQL Editor.'
           : msg,
       )
     } else {
@@ -408,6 +411,47 @@ export default function HantavirusPortal() {
                       </div>
                     )}
 
+                    <div className="sm:col-span-2">
+                      <span className={labelClass}>Study protocol</span>
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                        {(
+                          [
+                            ['navis', 'NAVIS'],
+                            ['isaric', 'ISARIC Hantavirus protocol'],
+                          ] as const
+                        ).map(([value, label]) => {
+                          const id = `studyProtocol-${value}`
+                          const checked = formData.studyProtocol === value
+                          return (
+                            <label
+                              key={value}
+                              htmlFor={id}
+                              className={`inline-flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                checked
+                                  ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/20'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              <input
+                                id={id}
+                                type="radio"
+                                name="studyProtocol"
+                                value={value}
+                                checked={checked}
+                                onChange={handleChange}
+                                className="h-4 w-4 border-slate-300 text-teal-600 focus:ring-teal-500"
+                              />
+                              {label}
+                            </label>
+                          )
+                        })}
+                      </div>
+                      <p className="mt-1.5 text-xs text-slate-500">
+                        e.g. Ireland may report under the ISARIC Hantavirus
+                        protocol instead of NAVIS.
+                      </p>
+                    </div>
+
                     <div className="sm:col-span-2 sm:max-w-xs">
                       <label htmlFor="reportDate" className={labelClass}>
                         Date of report/update
@@ -429,15 +473,19 @@ export default function HantavirusPortal() {
                 </section>
 
                 <section className="space-y-6">
-                  <SectionHeader n={2} title="Epidemiological Data" />
+                  <SectionHeader n={2} title="Epidemiological Data">
+                    <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+                      Confirmed cases are PCR+; contacts are PCR−
+                    </p>
+                  </SectionHeader>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {(
                       [
-                        ['totalCases', 'Total'],
-                        ['confirmedCases', 'Number of confirmed cases'],
-                        ['suspectedCases', 'Number of contacts'],
-                        ['deaths', 'Number of deaths'],
+                        ['confirmedCases', 'Confirmed cases (PCR+)'],
+                        ['suspectedCases', 'Contacts (PCR−)'],
+                        ['deathsCases', 'Deaths among confirmed cases (PCR+)'],
+                        ['deathsContacts', 'Deaths among contacts (PCR−)'],
                       ] as const
                     ).map(([name, label]) => (
                       <div
@@ -570,13 +618,14 @@ export default function HantavirusPortal() {
 
                       <div>
                         <span className={labelClass}>
-                          Status of ethics approval
+                          Ethics approval status
                         </span>
-                        <div className="mt-3 flex flex-wrap gap-4">
+                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                           {(
                             [
-                              ['yes', 'Yes'],
-                              ['no', 'No'],
+                              ['in_preparation', 'In preparation'],
+                              ['submitted', 'Submitted'],
+                              ['approved', 'Approved'],
                             ] as const
                           ).map(([value, label]) => {
                             const id = `ethicsApproval-${value}`
@@ -594,12 +643,12 @@ export default function HantavirusPortal() {
                               >
                                 <input
                                   id={id}
-                                  type="checkbox"
+                                  type="radio"
                                   name="ethicsApproval"
                                   value={value}
                                   checked={checked}
                                   onChange={handleChange}
-                                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                  className="h-4 w-4 border-slate-300 text-teal-600 focus:ring-teal-500"
                                 />
                                 {label}
                               </label>
@@ -608,7 +657,7 @@ export default function HantavirusPortal() {
                         </div>
                       </div>
 
-                      {formData.ethicsApproval === 'yes' && (
+                      {formData.ethicsApproval === 'approved' && (
                         <div className="max-w-md">
                           <label
                             htmlFor="ethicsApprovalDate"
