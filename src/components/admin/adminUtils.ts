@@ -76,8 +76,6 @@ export type CountryCaseRow = {
   country: string
   confirmed: number
   suspected: number
-  deathsCases: number
-  deathsContacts: number
   deaths: number
   enrolled: number
 }
@@ -91,15 +89,11 @@ export function casesByCountry(reports: HantavirusReport[]): CountryCaseRow[] {
       country,
       confirmed: 0,
       suspected: 0,
-      deathsCases: 0,
-      deathsContacts: 0,
       deaths: 0,
       enrolled: 0,
     }
     row.confirmed += r.confirmed_cases ?? 0
     row.suspected += r.suspected_cases ?? 0
-    row.deathsCases += r.deaths_cases ?? 0
-    row.deathsContacts += r.deaths_contacts ?? 0
     row.deaths += reportDeathsTotal(r)
     row.enrolled += r.enrolled_participants ?? 0
     map.set(country, row)

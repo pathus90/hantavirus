@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { HantavirusReport } from '../../types/report'
+import { reportDeathsTotal, type HantavirusReport } from '../../types/report'
 import type { CountryCaseRow, EthicsSlice, TimelinePoint } from './adminUtils'
 import { fmtDate, fmtEthics, fmtProtocol } from './adminUtils'
 
@@ -70,8 +70,7 @@ export function reportRows(reports: HantavirusReport[]) {
     'Report date': fmtDate(r.report_date) === '—' ? '' : fmtDate(r.report_date),
     'Confirmed cases (PCR+)': r.confirmed_cases ?? '',
     'Contacts (PCR−)': r.suspected_cases ?? '',
-    'Deaths (cases PCR+)': r.deaths_cases ?? '',
-    'Deaths (contacts PCR−)': r.deaths_contacts ?? '',
+    Deaths: reportDeathsTotal(r) || '',
     'Boat contacts': r.boat_contacts ?? '',
     'Maritime exposure': r.boat_exposure ?? '',
     'Air contacts': r.airplane_contacts ?? '',
@@ -89,9 +88,7 @@ export function countryCaseRows(rows: CountryCaseRow[]) {
     Country: r.country,
     'Confirmed (PCR+)': r.confirmed,
     'Contacts (PCR−)': r.suspected,
-    'Deaths (cases)': r.deathsCases,
-    'Deaths (contacts)': r.deathsContacts,
-    'Deaths (total)': r.deaths,
+    Deaths: r.deaths,
     'Enrolled participants': r.enrolled,
   }))
 }

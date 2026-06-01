@@ -37,8 +37,7 @@ export type ReportFormData = {
   reportDate: string
   confirmedCases: string
   suspectedCases: string
-  deathsCases: string
-  deathsContacts: string
+  deaths: string
   boatContacts: string
   boatExposure: string
   airplaneContacts: string
@@ -55,8 +54,7 @@ export const emptyFormData = (): ReportFormData => ({
   reportDate: '',
   confirmedCases: '',
   suspectedCases: '',
-  deathsCases: '',
-  deathsContacts: '',
+  deaths: '',
   boatContacts: '',
   boatExposure: '',
   airplaneContacts: '',
@@ -80,9 +78,8 @@ export const PROTOCOL_LABELS: Record<string, string> = {
 }
 
 export function reportDeathsTotal(r: HantavirusReport): number {
-  const fromSplit = (r.deaths_cases ?? 0) + (r.deaths_contacts ?? 0)
-  if (fromSplit > 0) return fromSplit
-  return r.deaths ?? 0
+  if (r.deaths != null && r.deaths > 0) return r.deaths
+  return (r.deaths_cases ?? 0) + (r.deaths_contacts ?? 0)
 }
 
 export function reportCasesTotal(r: HantavirusReport): number {

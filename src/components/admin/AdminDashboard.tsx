@@ -18,6 +18,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import DatePicker from '../DatePicker'
 import type { HantavirusReport } from '../../types/report'
+import { reportDeathsTotal } from '../../types/report'
 import {
   exportAllExcel,
   exportCountryCasesCsv,
@@ -48,8 +49,7 @@ const selectClass =
 const CHART_COLORS = {
   confirmed: '#14b8a6',
   suspected: '#f59e0b',
-  deathsCases: '#ef4444',
-  deathsContacts: '#dc2626',
+  deaths: '#ef4444',
   enrolled: '#6366f1',
   line: '#0d9488',
 }
@@ -526,15 +526,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar
-                        dataKey="deathsCases"
-                        name="Deaths (cases)"
-                        fill={CHART_COLORS.deathsCases}
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="deathsContacts"
-                        name="Deaths (contacts)"
-                        fill={CHART_COLORS.deathsContacts}
+                        dataKey="deaths"
+                        name="Deaths"
+                        fill={CHART_COLORS.deaths}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -553,14 +547,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                       hint: 'contact cases',
                     },
                     {
-                      color: CHART_COLORS.deathsCases,
-                      label: 'Deaths among cases',
-                      hint: 'fatalities in PCR+ cases',
-                    },
-                    {
-                      color: CHART_COLORS.deathsContacts,
-                      label: 'Deaths among contacts',
-                      hint: 'fatalities in PCR− contacts',
+                      color: CHART_COLORS.deaths,
+                      label: 'Deaths',
+                      hint: 'reported fatalities',
                     },
                   ]}
                 />
@@ -771,8 +760,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <th className="px-4 py-3">Report date</th>
                       <th className="px-4 py-3 text-right">PCR+</th>
                       <th className="px-4 py-3 text-right">PCR−</th>
-                      <th className="px-4 py-3 text-right">Deaths (cases)</th>
-                      <th className="px-4 py-3 text-right">Deaths (contacts)</th>
+                      <th className="px-4 py-3 text-right">Deaths</th>
                       <th className="px-4 py-3 text-right">Boat</th>
                       <th className="px-4 py-3 text-right">Air</th>
                       <th className="px-4 py-3">Ethics</th>
@@ -808,10 +796,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmt(r.suspected_cases)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {fmt(r.deaths_cases)}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {fmt(r.deaths_contacts)}
+                            {fmt(reportDeathsTotal(r) || null)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.boat_contacts)}
@@ -834,7 +819,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={14} className="px-4 py-4">
+                            <td colSpan={13} className="px-4 py-4">
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">
