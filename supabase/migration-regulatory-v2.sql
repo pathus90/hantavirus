@@ -27,6 +27,12 @@ where study_protocol is null;
 
 drop function if exists public.submit_hantavirus_report(
   text, date, text, text, text, text,
+  integer, integer, integer, integer, text, integer, text,
+  text, date, integer
+);
+
+drop function if exists public.submit_hantavirus_report(
+  text, date, text, text, text, text,
   integer, integer, integer, integer, integer, text, integer, text,
   text, date, integer
 );
@@ -44,6 +50,7 @@ create or replace function public.submit_hantavirus_report(
   p_institution text default null,
   p_focal_point text default null,
   p_contact text default null,
+  p_total_cases integer default 0,
   p_confirmed_cases integer default 0,
   p_suspected_cases integer default 0,
   p_deaths integer default 0,
@@ -80,7 +87,10 @@ begin
     v_protocol := 'navis';
   end if;
 
-  v_total := coalesce(p_confirmed_cases, 0) + coalesce(p_suspected_cases, 0);
+  v_total := coalesce(
+    nullif(p_total_cases, 0),
+    coalesce(p_confirmed_cases, 0) + coalesce(p_suspected_cases, 0)
+  );
   v_deaths := coalesce(p_deaths, 0);
 
   select id
@@ -165,12 +175,12 @@ $$;
 
 revoke all on function public.submit_hantavirus_report(
   text, date, text, text, text, text,
-  integer, integer, integer, integer, text, integer, text,
+  integer, integer, integer, integer, integer, text, integer, text,
   text, date, integer
 ) from public;
 
 grant execute on function public.submit_hantavirus_report(
   text, date, text, text, text, text,
-  integer, integer, integer, integer, text, integer, text,
+  integer, integer, integer, integer, integer, text, integer, text,
   text, date, integer
 ) to anon, authenticated;

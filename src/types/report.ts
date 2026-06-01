@@ -35,6 +35,7 @@ export type ReportFormData = {
   countryOther: string
   studyProtocol: StudyProtocol | ''
   reportDate: string
+  totalCases: string
   confirmedCases: string
   suspectedCases: string
   deaths: string
@@ -52,6 +53,7 @@ export const emptyFormData = (): ReportFormData => ({
   countryOther: '',
   studyProtocol: 'navis',
   reportDate: '',
+  totalCases: '',
   confirmedCases: '',
   suspectedCases: '',
   deaths: '',
@@ -83,9 +85,8 @@ export function reportDeathsTotal(r: HantavirusReport): number {
 }
 
 export function reportCasesTotal(r: HantavirusReport): number {
-  const computed = (r.confirmed_cases ?? 0) + (r.suspected_cases ?? 0)
-  if (computed > 0) return computed
-  return r.total_cases ?? 0
+  if (r.total_cases != null && r.total_cases > 0) return r.total_cases
+  return (r.confirmed_cases ?? 0) + (r.suspected_cases ?? 0)
 }
 
 export function normalizeEthics(value: string | null | undefined): string {

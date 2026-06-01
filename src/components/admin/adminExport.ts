@@ -1,5 +1,9 @@
 import * as XLSX from 'xlsx'
-import { reportDeathsTotal, type HantavirusReport } from '../../types/report'
+import {
+  reportCasesTotal,
+  reportDeathsTotal,
+  type HantavirusReport,
+} from '../../types/report'
 import type { CountryCaseRow, EthicsSlice, TimelinePoint } from './adminUtils'
 import { fmtDate, fmtEthics, fmtProtocol } from './adminUtils'
 
@@ -68,6 +72,7 @@ export function reportRows(reports: HantavirusReport[]) {
     'Focal point': r.focal_point ?? '',
     Contact: r.contact ?? '',
     'Report date': fmtDate(r.report_date) === '—' ? '' : fmtDate(r.report_date),
+    Total: reportCasesTotal(r) || '',
     'Confirmed cases (PCR+)': r.confirmed_cases ?? '',
     'Contacts (PCR−)': r.suspected_cases ?? '',
     Deaths: reportDeathsTotal(r) || '',
@@ -86,6 +91,7 @@ export function reportRows(reports: HantavirusReport[]) {
 export function countryCaseRows(rows: CountryCaseRow[]) {
   return rows.map((r) => ({
     Country: r.country,
+    Total: r.total,
     'Confirmed (PCR+)': r.confirmed,
     'Contacts (PCR−)': r.suspected,
     Deaths: r.deaths,

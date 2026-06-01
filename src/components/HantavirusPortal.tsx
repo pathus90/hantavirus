@@ -217,6 +217,7 @@ export default function HantavirusPortal() {
         p_institution: null,
         p_focal_point: null,
         p_contact: null,
+        p_total_cases: toNumber(formData.totalCases),
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
         p_deaths: toNumber(formData.deaths),
@@ -484,6 +485,7 @@ export default function HantavirusPortal() {
                         ['confirmedCases', 'Confirmed cases (PCR+)'],
                         ['suspectedCases', 'Contacts (PCR−)'],
                         ['deaths', 'Deaths'],
+                        ['totalCases', 'Total'],
                       ] as const
                     ).map(([name, label]) => (
                       <div

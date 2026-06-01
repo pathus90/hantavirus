@@ -18,7 +18,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import DatePicker from '../DatePicker'
 import type { HantavirusReport } from '../../types/report'
-import { reportDeathsTotal } from '../../types/report'
+import { reportCasesTotal, reportDeathsTotal } from '../../types/report'
 import {
   exportAllExcel,
   exportCountryCasesCsv,
@@ -37,6 +37,7 @@ import {
   fmtEthics,
   fmtProtocol,
   submissionsTimeline,
+  sumCases,
   sumDeaths,
   sumField,
   uniqueCountries,
@@ -47,6 +48,7 @@ const selectClass =
   'rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15'
 
 const CHART_COLORS = {
+  total: '#0f766e',
   confirmed: '#14b8a6',
   suspected: '#f59e0b',
   deaths: '#ef4444',
@@ -364,9 +366,10 @@ export default function AdminDashboard({ onLogout }: Props) {
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-7">
               <StatCard label="Reports" value={filtered.length} />
               <StatCard label="Countries" value={countryCases.length} />
+              <StatCard label="Total cases" value={sumCases(filtered)} />
               <StatCard
                 label="Confirmed (PCR+)"
                 value={sumField(filtered, 'confirmed_cases')}
@@ -514,6 +517,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                       />
                       <Legend {...CHART_LEGEND_PROPS} />
                       <Bar
+                        dataKey="total"
+                        name="Total"
+                        fill={CHART_COLORS.total}
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
                         dataKey="confirmed"
                         name="Confirmed (PCR+)"
                         fill={CHART_COLORS.confirmed}
@@ -536,6 +545,11 @@ export default function AdminDashboard({ onLogout }: Props) {
                 </div>
                 <ChartLegendNote
                   items={[
+                    {
+                      color: CHART_COLORS.total,
+                      label: 'Total',
+                      hint: 'reported total cases',
+                    },
                     {
                       color: CHART_COLORS.confirmed,
                       label: 'Confirmed (PCR+)',
@@ -758,6 +772,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <th className="px-4 py-3">Country</th>
                       <th className="px-4 py-3">Protocol</th>
                       <th className="px-4 py-3">Report date</th>
+                      <th className="px-4 py-3 text-right">Total</th>
                       <th className="px-4 py-3 text-right">PCR+</th>
                       <th className="px-4 py-3 text-right">PCR−</th>
                       <th className="px-4 py-3 text-right">Deaths</th>
@@ -789,6 +804,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                           <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                             {fmtDate(r.report_date)}
                           </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums font-medium text-slate-900">
+                            {fmt(reportCasesTotal(r) || null)}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-teal-800">
                             {fmt(r.confirmed_cases)}
                           </td>
@@ -819,7 +837,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={13} className="px-4 py-4">
+                            <td colSpan={14} className="px-4 py-4">
                               <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">

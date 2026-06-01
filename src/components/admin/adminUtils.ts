@@ -74,6 +74,7 @@ export function sumDeaths(reports: HantavirusReport[]): number {
 
 export type CountryCaseRow = {
   country: string
+  total: number
   confirmed: number
   suspected: number
   deaths: number
@@ -87,11 +88,13 @@ export function casesByCountry(reports: HantavirusReport[]): CountryCaseRow[] {
     const country = r.country ?? 'Unknown'
     const row = map.get(country) ?? {
       country,
+      total: 0,
       confirmed: 0,
       suspected: 0,
       deaths: 0,
       enrolled: 0,
     }
+    row.total += reportCasesTotal(r)
     row.confirmed += r.confirmed_cases ?? 0
     row.suspected += r.suspected_cases ?? 0
     row.deaths += reportDeathsTotal(r)
@@ -99,9 +102,7 @@ export function casesByCountry(reports: HantavirusReport[]): CountryCaseRow[] {
     map.set(country, row)
   }
 
-  return [...map.values()].sort(
-    (a, b) => b.confirmed + b.suspected - (a.confirmed + a.suspected),
-  )
+  return [...map.values()].sort((a, b) => b.total - a.total)
 }
 
 export type EthicsSlice = { name: string; value: number; fill: string }
