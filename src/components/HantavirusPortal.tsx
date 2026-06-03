@@ -13,8 +13,118 @@ import DatePicker from './DatePicker'
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-800 shadow-sm transition placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15 sm:text-sm sm:py-2.5'
 
+const choiceClass = (checked: boolean) =>
+  `inline-flex min-h-[2.75rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+    checked
+      ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/20'
+      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+  }`
+
 const labelClass =
   'mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500'
+
+const hintClass = 'mb-2 text-xs leading-relaxed text-slate-500'
+
+const fieldCardClass =
+  'flex flex-col rounded-xl border border-slate-100 bg-slate-50/50 p-4'
+
+const subLabelClass = 'mb-2 block text-xs font-medium text-slate-600'
+
+function FormNumberField({
+  id,
+  name,
+  label,
+  value,
+  onChange,
+  hint,
+  className = '',
+}: {
+  id: string
+  name: string
+  label: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  hint?: string
+  className?: string
+}) {
+  return (
+    <div className={`${fieldCardClass} ${className}`.trim()}>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      {hint ? <p className={hintClass}>{hint}</p> : null}
+      <input
+        id={id}
+        type="number"
+        min={0}
+        inputMode="numeric"
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`${inputClass} bg-white`}
+      />
+    </div>
+  )
+}
+
+function ChoiceGroup({
+  legend,
+  hint,
+  name,
+  value,
+  onChange,
+  options,
+  columns = 2,
+  legendClass = labelClass,
+}: {
+  legend: string
+  hint?: string
+  name: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  options: readonly (readonly [string, string])[]
+  columns?: 1 | 2 | 3
+  legendClass?: string
+}) {
+  const gridClass =
+    columns === 1
+      ? 'grid-cols-1'
+      : columns === 3
+        ? 'grid-cols-1 sm:grid-cols-3'
+        : 'grid-cols-1 sm:grid-cols-2'
+
+  return (
+    <div>
+      <span className={legendClass}>{legend}</span>
+      {hint ? <p className={hintClass}>{hint}</p> : null}
+      <div className={`grid gap-2 ${gridClass}`}>
+        {options.map(([optionValue, optionLabel]) => {
+          const id = `${name}-${optionValue}`
+          const checked = value === optionValue
+
+          return (
+            <label
+              key={optionValue}
+              htmlFor={id}
+              className={`${choiceClass(checked)} w-full`}
+            >
+              <input
+                id={id}
+                type="radio"
+                name={name}
+                value={optionValue}
+                checked={checked}
+                onChange={onChange}
+                className="h-4 w-4 shrink-0 border-slate-300 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="min-w-0 flex-1 leading-snug">{optionLabel}</span>
+            </label>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function toNumber(value: string): number {
   const n = Number(value)
@@ -142,7 +252,9 @@ export default function HantavirusPortal() {
   const isOtherCountry = formData.country === OTHER_COUNTRY_VALUE
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value, type } = e.target
     const next =
@@ -208,6 +320,18 @@ export default function HantavirusPortal() {
       return
     }
 
+    const deathsCount = toNumber(formData.deathsCount)
+    if (deathsCount > 0 && !formData.deathsCategory) {
+      setError('Please select whether deaths are among PCR+ or PCR− cases.')
+      setLoading(false)
+      return
+    }
+
+    const pDeathsCases =
+      formData.deathsCategory === 'pcr_positive' ? deathsCount : 0
+    const pDeathsContacts =
+      formData.deathsCategory === 'pcr_negative' ? deathsCount : 0
+
     const { data, error: submitError } = await supabase.rpc(
       'submit_hantavirus_report',
       {
@@ -220,14 +344,15 @@ export default function HantavirusPortal() {
         p_total_cases: toNumber(formData.totalCases),
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
-        p_deaths: toNumber(formData.deaths),
+        p_deaths_cases: pDeathsCases,
+        p_deaths_contacts: pDeathsContacts,
         p_contacts_became_cases: toNumber(formData.contactsBecameCases),
-        p_boat_contacts: toNumber(formData.boatContacts),
-        p_boat_exposure: formData.boatExposure || null,
-        p_airplane_contacts: toNumber(formData.airplaneContacts),
-        p_airplane_exposure: formData.airplaneExposure || null,
-        p_hcw_contacts: toNumber(formData.hcwContacts),
-        p_hcw_exposure: formData.hcwExposure || null,
+        p_boat_contacts: 0,
+        p_boat_exposure: null,
+        p_airplane_contacts: 0,
+        p_airplane_exposure: null,
+        p_hcw_contacts: 0,
+        p_hcw_exposure: null,
         p_ethics_approval: formData.ethicsApproval || null,
         p_ethics_approval_date:
           formData.ethicsApproval === 'approved'
@@ -246,7 +371,7 @@ export default function HantavirusPortal() {
           msg.includes('p_deaths_cases') ||
           msg.includes('p_contacts_became_cases') ||
           msg.includes('p_enrolled_pcr_positive')
-          ? 'Server setup incomplete: run supabase/migration-regulatory-v3.sql in Supabase SQL Editor.'
+          ? 'Server setup incomplete: run supabase/migration-regulatory-v4.sql in Supabase SQL Editor.'
           : msg,
       )
     } else {
@@ -418,44 +543,18 @@ export default function HantavirusPortal() {
                     )}
 
                     <div className="sm:col-span-2">
-                      <span className={labelClass}>Study protocol</span>
-                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                        {(
-                          [
-                            ['navis', 'NAVIS'],
-                            ['isaric', 'ISARIC Hantavirus protocol'],
-                          ] as const
-                        ).map(([value, label]) => {
-                          const id = `studyProtocol-${value}`
-                          const checked = formData.studyProtocol === value
-                          return (
-                            <label
-                              key={value}
-                              htmlFor={id}
-                              className={`inline-flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                                checked
-                                  ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/20'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                              }`}
-                            >
-                              <input
-                                id={id}
-                                type="radio"
-                                name="studyProtocol"
-                                value={value}
-                                checked={checked}
-                                onChange={handleChange}
-                                className="h-4 w-4 border-slate-300 text-teal-600 focus:ring-teal-500"
-                              />
-                              {label}
-                            </label>
-                          )
-                        })}
-                      </div>
-                      <p className="mt-1.5 text-xs text-slate-500">
-                        e.g. Ireland may report under the ISARIC Hantavirus
-                        protocol instead of NAVIS.
-                      </p>
+                      <ChoiceGroup
+                        legend="Study protocol"
+                        hint="e.g. Ireland may report under the ISARIC Hantavirus protocol instead of NAVIS."
+                        name="studyProtocol"
+                        value={formData.studyProtocol}
+                        onChange={handleChange}
+                        options={[
+                          ['navis', 'NAVIS'],
+                          ['isaric', 'ISARIC Hantavirus protocol'],
+                        ]}
+                        columns={2}
+                      />
                     </div>
 
                     <div className="sm:col-span-2 sm:max-w-xs">
@@ -486,242 +585,97 @@ export default function HantavirusPortal() {
                   </SectionHeader>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {(
-                      [
-                        ['confirmedCases', 'Confirmed cases (PCR+)'],
-                        ['suspectedCases', 'Contacts (PCR−)'],
-                        [
-                          'contactsBecameCases',
-                          'Contacts who became cases (PCR− → PCR+)',
-                        ],
-                        ['deaths', 'Deaths'],
-                        ['totalCases', 'Total (PCR+ plus PCR−)'],
-                      ] as const
-                    ).map(([name, label]) => (
-                      <div
-                        key={name}
-                        className="rounded-xl border border-slate-100 bg-slate-50/50 p-4"
-                      >
-                        <label htmlFor={name} className={labelClass}>
-                          {label}
-                        </label>
-                        {name === 'deaths' && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            Reported separately; typically a subset of PCR+
-                            cases.
-                          </p>
-                        )}
-                        {name === 'totalCases' && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            Sum of PCR+ and PCR− (deaths are not added to this
-                            total).
-                          </p>
-                        )}
-                        <input
-                          id={name}
-                          type="number"
-                          min={0}
-                          inputMode="numeric"
-                          name={name}
-                          value={formData[name]}
+                    <FormNumberField
+                      id="confirmedCases"
+                      name="confirmedCases"
+                      label="Confirmed cases (PCR+)"
+                      value={formData.confirmedCases}
+                      onChange={handleChange}
+                    />
+                    <FormNumberField
+                      id="suspectedCases"
+                      name="suspectedCases"
+                      label="Contacts (PCR−)"
+                      value={formData.suspectedCases}
+                      onChange={handleChange}
+                    />
+                    <FormNumberField
+                      id="contactsBecameCases"
+                      name="contactsBecameCases"
+                      label="Contacts who became cases (PCR− → PCR+)"
+                      value={formData.contactsBecameCases}
+                      onChange={handleChange}
+                      className="sm:col-span-2"
+                    />
+
+                    <div className={`${fieldCardClass} sm:col-span-2`}>
+                      <span className={labelClass}>Deaths</span>
+                      <p className={hintClass}>
+                        Reported separately from the total. Select PCR status,
+                        then enter the number of deaths.
+                      </p>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_8.5rem] sm:items-end">
+                        <ChoiceGroup
+                          legend="PCR status"
+                          name="deathsCategory"
+                          value={formData.deathsCategory}
                           onChange={handleChange}
-                          className={`${inputClass} mt-1 bg-white`}
+                          options={[
+                            ['pcr_positive', 'PCR+ (confirmed cases)'],
+                            ['pcr_negative', 'PCR− (contacts)'],
+                          ]}
+                          columns={2}
+                          legendClass={subLabelClass}
                         />
+                        <div>
+                          <label htmlFor="deathsCount" className={subLabelClass}>
+                            Count
+                          </label>
+                          <input
+                            id="deathsCount"
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            name="deathsCount"
+                            value={formData.deathsCount}
+                            onChange={handleChange}
+                            className={`${inputClass} bg-white`}
+                          />
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    <FormNumberField
+                      id="totalCases"
+                      name="totalCases"
+                      label="Total (PCR+ plus PCR−)"
+                      hint="Sum of PCR+ and PCR− (deaths are not added to this total)."
+                      value={formData.totalCases}
+                      onChange={handleChange}
+                      className="sm:col-span-2 sm:max-w-sm sm:justify-self-end"
+                    />
                   </div>
                 </section>
 
                 <section className="space-y-6">
-                  <SectionHeader
-                    n={3}
-                    title="Exposure and Contact Information"
-                  >
-                    <p className="mt-1 hidden text-sm text-slate-500 sm:block">
-                      Optional — report exposure settings when relevant (all
-                      fields may be left blank).
-                    </p>
-                  </SectionHeader>
-
-                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-                    <div className="rounded-2xl border border-cyan-100/80 bg-gradient-to-b from-cyan-50/60 to-white p-5 sm:p-6">
-                      <h4 className="font-semibold text-slate-900">
-                        Maritime Exposure (Cruise/Boat)
-                      </h4>
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <label
-                            htmlFor="boatContacts"
-                            className={labelClass}
-                          >
-                            Contacts (boat/cruise)
-                          </label>
-                          <input
-                            id="boatContacts"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            name="boatContacts"
-                            value={formData.boatContacts}
-                            onChange={handleChange}
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="boatExposure"
-                            className={labelClass}
-                          >
-                            Exposure setting{' '}
-                            <span className="font-normal normal-case text-slate-400">
-                              (optional)
-                            </span>
-                          </label>
-                          <textarea
-                            id="boatExposure"
-                            rows={3}
-                            name="boatExposure"
-                            value={formData.boatExposure}
-                            onChange={handleChange}
-                            className={`${inputClass} resize-y`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-sky-100/80 bg-gradient-to-b from-sky-50/60 to-white p-5 sm:p-6">
-                      <h4 className="font-semibold text-slate-900">
-                        Air Travel Exposure
-                      </h4>
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <label
-                            htmlFor="airplaneContacts"
-                            className={labelClass}
-                          >
-                            Contacts (airplane)
-                          </label>
-                          <input
-                            id="airplaneContacts"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            name="airplaneContacts"
-                            value={formData.airplaneContacts}
-                            onChange={handleChange}
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="airplaneExposure"
-                            className={labelClass}
-                          >
-                            Flight & exposure details{' '}
-                            <span className="font-normal normal-case text-slate-400">
-                              (optional)
-                            </span>
-                          </label>
-                          <textarea
-                            id="airplaneExposure"
-                            rows={3}
-                            name="airplaneExposure"
-                            value={formData.airplaneExposure}
-                            onChange={handleChange}
-                            className={`${inputClass} resize-y`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/60 to-white p-5 sm:p-6">
-                      <h4 className="font-semibold text-slate-900">
-                        Healthcare Worker Exposure
-                      </h4>
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <label htmlFor="hcwContacts" className={labelClass}>
-                            Contacts (healthcare workers)
-                          </label>
-                          <input
-                            id="hcwContacts"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            name="hcwContacts"
-                            value={formData.hcwContacts}
-                            onChange={handleChange}
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="hcwExposure" className={labelClass}>
-                            Exposure setting{' '}
-                            <span className="font-normal normal-case text-slate-400">
-                              (optional)
-                            </span>
-                          </label>
-                          <textarea
-                            id="hcwExposure"
-                            rows={3}
-                            name="hcwExposure"
-                            value={formData.hcwExposure}
-                            onChange={handleChange}
-                            className={`${inputClass} resize-y`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="space-y-6">
-                  <SectionHeader n={4} title="Regulatory" />
+                  <SectionHeader n={3} title="Regulatory" />
 
                   <div className="rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/50 to-white p-5 sm:p-6">
                     <fieldset className="space-y-6">
                       <legend className="sr-only">Regulatory information</legend>
 
-                      <div>
-                        <span className={labelClass}>
-                          Ethics approval status
-                        </span>
-                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                          {(
-                            [
-                              ['in_preparation', 'In preparation'],
-                              ['submitted', 'Submitted'],
-                              ['approved', 'Approved'],
-                            ] as const
-                          ).map(([value, label]) => {
-                            const id = `ethicsApproval-${value}`
-                            const checked = formData.ethicsApproval === value
-
-                            return (
-                              <label
-                                key={value}
-                                htmlFor={id}
-                                className={`inline-flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                                  checked
-                                    ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/20'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                                }`}
-                              >
-                                <input
-                                  id={id}
-                                  type="radio"
-                                  name="ethicsApproval"
-                                  value={value}
-                                  checked={checked}
-                                  onChange={handleChange}
-                                  className="h-4 w-4 border-slate-300 text-teal-600 focus:ring-teal-500"
-                                />
-                                {label}
-                              </label>
-                            )
-                          })}
-                        </div>
-                      </div>
+                      <ChoiceGroup
+                        legend="Ethics approval status"
+                        name="ethicsApproval"
+                        value={formData.ethicsApproval}
+                        onChange={handleChange}
+                        options={[
+                          ['in_preparation', 'In preparation'],
+                          ['submitted', 'Submitted'],
+                          ['approved', 'Approved'],
+                        ]}
+                        columns={3}
+                      />
 
                       {formData.ethicsApproval === 'approved' && (
                         <div className="max-w-md">
@@ -759,7 +713,7 @@ export default function HantavirusPortal() {
                             name="enrolledPcrPositive"
                             value={formData.enrolledPcrPositive}
                             onChange={handleChange}
-                            className={`${inputClass} mt-1`}
+                            className={inputClass}
                           />
                         </div>
                         <div>
@@ -777,7 +731,7 @@ export default function HantavirusPortal() {
                             name="enrolledPcrNegative"
                             value={formData.enrolledPcrNegative}
                             onChange={handleChange}
-                            className={`${inputClass} mt-1`}
+                            className={inputClass}
                           />
                         </div>
                       </div>

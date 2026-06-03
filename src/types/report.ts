@@ -1,5 +1,7 @@
 export type StudyProtocol = 'navis' | 'isaric'
 
+export type DeathCategory = '' | 'pcr_positive' | 'pcr_negative'
+
 export type EthicsApproval =
   | ''
   | 'in_preparation'
@@ -44,13 +46,8 @@ export type ReportFormData = {
   confirmedCases: string
   suspectedCases: string
   contactsBecameCases: string
-  deaths: string
-  boatContacts: string
-  boatExposure: string
-  airplaneContacts: string
-  airplaneExposure: string
-  hcwContacts: string
-  hcwExposure: string
+  deathsCount: string
+  deathsCategory: DeathCategory
   ethicsApproval: EthicsApproval
   ethicsApprovalDate: string
   enrolledPcrPositive: string
@@ -66,13 +63,8 @@ export const emptyFormData = (): ReportFormData => ({
   confirmedCases: '',
   suspectedCases: '',
   contactsBecameCases: '',
-  deaths: '',
-  boatContacts: '',
-  boatExposure: '',
-  airplaneContacts: '',
-  airplaneExposure: '',
-  hcwContacts: '',
-  hcwExposure: '',
+  deathsCount: '',
+  deathsCategory: '',
   ethicsApproval: '',
   ethicsApprovalDate: '',
   enrolledPcrPositive: '',
@@ -100,8 +92,9 @@ export function reportEnrolledTotal(r: HantavirusReport): number {
 }
 
 export function reportDeathsTotal(r: HantavirusReport): number {
-  if (r.deaths != null && r.deaths > 0) return r.deaths
-  return (r.deaths_cases ?? 0) + (r.deaths_contacts ?? 0)
+  const fromSplit = (r.deaths_cases ?? 0) + (r.deaths_contacts ?? 0)
+  if (fromSplit > 0) return fromSplit
+  return r.deaths ?? 0
 }
 
 export function reportCasesTotal(r: HantavirusReport): number {

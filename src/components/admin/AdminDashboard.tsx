@@ -18,7 +18,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import DatePicker from '../DatePicker'
 import type { HantavirusReport } from '../../types/report'
-import { reportCasesTotal, reportDeathsTotal } from '../../types/report'
+import { reportCasesTotal } from '../../types/report'
 import {
   exportAllExcel,
   exportCountryCasesCsv,
@@ -779,7 +779,8 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <th className="px-4 py-3 text-right">PCR+</th>
                       <th className="px-4 py-3 text-right">PCR−</th>
                       <th className="px-4 py-3 text-right">PCR−→+</th>
-                      <th className="px-4 py-3 text-right">Deaths</th>
+                      <th className="px-4 py-3 text-right">Deaths PCR+</th>
+                      <th className="px-4 py-3 text-right">Deaths PCR−</th>
                       <th className="px-4 py-3 text-right">Boat</th>
                       <th className="px-4 py-3 text-right">Air</th>
                       <th className="px-4 py-3 text-right">HCW</th>
@@ -823,7 +824,10 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmt(r.contacts_became_cases)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {fmt(reportDeathsTotal(r) || null)}
+                            {fmt(r.deaths_cases)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {fmt(r.deaths_contacts)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.boat_contacts)}
@@ -852,7 +856,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={17} className="px-4 py-4">
+                            <td colSpan={18} className="px-4 py-4">
                               <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">

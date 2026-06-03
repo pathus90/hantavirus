@@ -1,7 +1,6 @@
 import * as XLSX from 'xlsx'
 import {
   reportCasesTotal,
-  reportDeathsTotal,
   reportEnrolledTotal,
   type HantavirusReport,
 } from '../../types/report'
@@ -77,7 +76,8 @@ export function reportRows(reports: HantavirusReport[]) {
     'Confirmed cases (PCR+)': r.confirmed_cases ?? '',
     'Contacts (PCR−)': r.suspected_cases ?? '',
     'Contacts → cases': r.contacts_became_cases ?? '',
-    Deaths: reportDeathsTotal(r) || '',
+    'Deaths (PCR+)': r.deaths_cases ?? '',
+    'Deaths (PCR−)': r.deaths_contacts ?? '',
     'Boat contacts': r.boat_contacts ?? '',
     'Maritime exposure': r.boat_exposure ?? '',
     'Air contacts': r.airplane_contacts ?? '',

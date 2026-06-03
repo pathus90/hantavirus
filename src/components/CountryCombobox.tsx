@@ -137,7 +137,7 @@ export default function CountryCombobox({
       <input type="hidden" name="country" value={value} required={required} />
 
       <div
-        className={`flex items-center overflow-hidden rounded-xl border bg-white shadow-sm transition ${
+        className={`flex h-[3.25rem] items-stretch overflow-hidden rounded-xl border bg-white shadow-sm transition sm:h-11 ${
           open
             ? 'border-teal-500 ring-4 ring-teal-500/15'
             : 'border-slate-200 hover:border-slate-300'
@@ -175,9 +175,9 @@ export default function CountryCombobox({
             }, 180)
           }}
           onKeyDown={handleInputKeyDown}
-          className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none sm:text-sm"
+          className="min-w-0 flex-1 self-center border-0 bg-transparent px-4 py-3 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none sm:py-2.5 sm:text-sm"
         />
-        <div className="flex items-center gap-0.5 pr-2">
+        <div className="flex shrink-0 items-center gap-0.5 self-stretch border-l border-slate-100 px-1.5">
           {value && !disabled && (
             <button
               type="button"
@@ -189,14 +189,14 @@ export default function CountryCombobox({
                 setQuery('')
                 inputRef.current?.focus()
               }}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
             >
               <svg
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 aria-hidden
               >
                 <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
@@ -218,20 +218,18 @@ export default function CountryCombobox({
                 inputRef.current?.focus()
               }
             }}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
           >
             <svg
-              className={`h-5 w-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+              className={`h-4 w-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
               aria-hidden
             >
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
+                fillRule="evenodd"
+                d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                clipRule="evenodd"
               />
             </svg>
           </button>

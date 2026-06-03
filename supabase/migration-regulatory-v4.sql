@@ -1,25 +1,22 @@
--- NAVIS feedback: contacts→cases, HCW exposure, PCR+/PCR− enrollment split.
--- Run once in Supabase SQL Editor after migration-regulatory-v2.sql
+-- Deaths split by PCR status (form dropdown). Run after migration-regulatory-v3.sql
 
-alter table public.hantavirus_reports
-  add column if not exists contacts_became_cases integer,
-  add column if not exists hcw_contacts integer,
-  add column if not exists hcw_exposure text,
-  add column if not exists enrolled_pcr_positive integer,
-  add column if not exists enrolled_pcr_negative integer;
-
-update public.hantavirus_reports
-set enrolled_pcr_positive = enrolled_participants
-where enrolled_participants is not null
-  and enrolled_participants > 0
-  and coalesce(enrolled_pcr_positive, 0) = 0
-  and coalesce(enrolled_pcr_negative, 0) = 0;
-
-drop function if exists public.submit_hantavirus_report(
-  text, date, text, text, text, text,
-  integer, integer, integer, integer, integer, text, integer, text,
-  text, date, integer
-);
+do $$
+declare
+  r record;
+begin
+  for r in
+    select pg_get_function_identity_arguments(p.oid) as args
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'submit_hantavirus_report'
+  loop
+    execute format(
+      'drop function if exists public.submit_hantavirus_report(%s)',
+      r.args
+    );
+  end loop;
+end $$;
 
 create or replace function public.submit_hantavirus_report(
   p_country text,
@@ -31,7 +28,8 @@ create or replace function public.submit_hantavirus_report(
   p_total_cases integer default 0,
   p_confirmed_cases integer default 0,
   p_suspected_cases integer default 0,
-  p_deaths integer default 0,
+  p_deaths_cases integer default 0,
+  p_deaths_contacts integer default 0,
   p_contacts_became_cases integer default 0,
   p_boat_contacts integer default 0,
   p_boat_exposure text default null,
@@ -74,7 +72,7 @@ begin
     nullif(p_total_cases, 0),
     coalesce(p_confirmed_cases, 0) + coalesce(p_suspected_cases, 0)
   );
-  v_deaths := coalesce(p_deaths, 0);
+  v_deaths := coalesce(p_deaths_cases, 0) + coalesce(p_deaths_contacts, 0);
   v_enrolled :=
     coalesce(p_enrolled_pcr_positive, 0) + coalesce(p_enrolled_pcr_negative, 0);
 
@@ -96,8 +94,8 @@ begin
       confirmed_cases = p_confirmed_cases,
       suspected_cases = p_suspected_cases,
       deaths = v_deaths,
-      deaths_cases = null,
-      deaths_contacts = null,
+      deaths_cases = p_deaths_cases,
+      deaths_contacts = p_deaths_contacts,
       contacts_became_cases = p_contacts_became_cases,
       boat_contacts = p_boat_contacts,
       boat_exposure = p_boat_exposure,
@@ -151,8 +149,8 @@ begin
       p_confirmed_cases,
       p_suspected_cases,
       v_deaths,
-      null,
-      null,
+      p_deaths_cases,
+      p_deaths_contacts,
       p_contacts_became_cases,
       p_boat_contacts,
       p_boat_exposure,
@@ -175,12 +173,12 @@ $$;
 
 revoke all on function public.submit_hantavirus_report(
   text, date, text, text, text, text,
-  integer, integer, integer, integer, integer, integer,
+  integer, integer, integer, integer, integer, integer, integer,
   text, integer, text, integer, text, text, date, integer, integer
 ) from public;
 
 grant execute on function public.submit_hantavirus_report(
   text, date, text, text, text, text,
-  integer, integer, integer, integer, integer, integer,
+  integer, integer, integer, integer, integer, integer, integer,
   text, integer, text, integer, text, text, date, integer, integer
 ) to anon, authenticated;
