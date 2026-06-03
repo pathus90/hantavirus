@@ -4,6 +4,7 @@ import {
   normalizeEthics,
   reportCasesTotal,
   reportDeathsTotal,
+  reportEnrolledTotal,
 } from '../../types/report'
 
 export type AdminFilters = {
@@ -78,6 +79,8 @@ export type CountryCaseRow = {
   confirmed: number
   suspected: number
   deaths: number
+  enrolledPcrPositive: number
+  enrolledPcrNegative: number
   enrolled: number
 }
 
@@ -92,13 +95,17 @@ export function casesByCountry(reports: HantavirusReport[]): CountryCaseRow[] {
       confirmed: 0,
       suspected: 0,
       deaths: 0,
+      enrolledPcrPositive: 0,
+      enrolledPcrNegative: 0,
       enrolled: 0,
     }
     row.total += reportCasesTotal(r)
     row.confirmed += r.confirmed_cases ?? 0
     row.suspected += r.suspected_cases ?? 0
     row.deaths += reportDeathsTotal(r)
-    row.enrolled += r.enrolled_participants ?? 0
+    row.enrolledPcrPositive += r.enrolled_pcr_positive ?? 0
+    row.enrolledPcrNegative += r.enrolled_pcr_negative ?? 0
+    row.enrolled += reportEnrolledTotal(r)
     map.set(country, row)
   }
 

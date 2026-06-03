@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import {
   reportCasesTotal,
   reportDeathsTotal,
+  reportEnrolledTotal,
   type HantavirusReport,
 } from '../../types/report'
 import type { CountryCaseRow, EthicsSlice, TimelinePoint } from './adminUtils'
@@ -75,15 +76,20 @@ export function reportRows(reports: HantavirusReport[]) {
     Total: reportCasesTotal(r) || '',
     'Confirmed cases (PCR+)': r.confirmed_cases ?? '',
     'Contacts (PCR−)': r.suspected_cases ?? '',
+    'Contacts → cases': r.contacts_became_cases ?? '',
     Deaths: reportDeathsTotal(r) || '',
     'Boat contacts': r.boat_contacts ?? '',
     'Maritime exposure': r.boat_exposure ?? '',
     'Air contacts': r.airplane_contacts ?? '',
     'Air travel exposure': r.airplane_exposure ?? '',
+    'HCW contacts': r.hcw_contacts ?? '',
+    'HCW exposure': r.hcw_exposure ?? '',
     'Ethics status': fmtEthics(r.ethics_approval),
     'Ethics approval date':
       fmtDate(r.ethics_approval_date) === '—' ? '' : fmtDate(r.ethics_approval_date),
-    'Enrolled participants': r.enrolled_participants ?? '',
+    'Enrolled PCR+': r.enrolled_pcr_positive ?? '',
+    'Enrolled PCR−': r.enrolled_pcr_negative ?? '',
+    'Enrolled (total)': reportEnrolledTotal(r) || '',
     Submitted: fmtDate(r.created_at) === '—' ? '' : fmtDate(r.created_at),
   }))
 }
@@ -95,7 +101,9 @@ export function countryCaseRows(rows: CountryCaseRow[]) {
     'Confirmed (PCR+)': r.confirmed,
     'Contacts (PCR−)': r.suspected,
     Deaths: r.deaths,
-    'Enrolled participants': r.enrolled,
+    'Enrolled PCR+': r.enrolledPcrPositive,
+    'Enrolled PCR−': r.enrolledPcrNegative,
+    'Enrolled (total)': r.enrolled,
   }))
 }
 

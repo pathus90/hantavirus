@@ -221,16 +221,20 @@ export default function HantavirusPortal() {
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
         p_deaths: toNumber(formData.deaths),
+        p_contacts_became_cases: toNumber(formData.contactsBecameCases),
         p_boat_contacts: toNumber(formData.boatContacts),
         p_boat_exposure: formData.boatExposure || null,
         p_airplane_contacts: toNumber(formData.airplaneContacts),
         p_airplane_exposure: formData.airplaneExposure || null,
+        p_hcw_contacts: toNumber(formData.hcwContacts),
+        p_hcw_exposure: formData.hcwExposure || null,
         p_ethics_approval: formData.ethicsApproval || null,
         p_ethics_approval_date:
           formData.ethicsApproval === 'approved'
             ? formData.ethicsApprovalDate || null
             : null,
-        p_enrolled_participants: toNumber(formData.enrolledParticipants),
+        p_enrolled_pcr_positive: toNumber(formData.enrolledPcrPositive),
+        p_enrolled_pcr_negative: toNumber(formData.enrolledPcrNegative),
       },
     )
 
@@ -239,8 +243,10 @@ export default function HantavirusPortal() {
       setError(
         msg.includes('submit_hantavirus_report') ||
           msg.includes('p_study_protocol') ||
-          msg.includes('p_deaths_cases')
-          ? 'Server setup incomplete: run supabase/migration-regulatory-v2.sql in Supabase SQL Editor.'
+          msg.includes('p_deaths_cases') ||
+          msg.includes('p_contacts_became_cases') ||
+          msg.includes('p_enrolled_pcr_positive')
+          ? 'Server setup incomplete: run supabase/migration-regulatory-v3.sql in Supabase SQL Editor.'
           : msg,
       )
     } else {
@@ -484,8 +490,12 @@ export default function HantavirusPortal() {
                       [
                         ['confirmedCases', 'Confirmed cases (PCR+)'],
                         ['suspectedCases', 'Contacts (PCR−)'],
+                        [
+                          'contactsBecameCases',
+                          'Contacts who became cases (PCR− → PCR+)',
+                        ],
                         ['deaths', 'Deaths'],
-                        ['totalCases', 'Total'],
+                        ['totalCases', 'Total (PCR+ plus PCR−)'],
                       ] as const
                     ).map(([name, label]) => (
                       <div
@@ -495,6 +505,18 @@ export default function HantavirusPortal() {
                         <label htmlFor={name} className={labelClass}>
                           {label}
                         </label>
+                        {name === 'deaths' && (
+                          <p className="mt-1 text-xs text-slate-500">
+                            Reported separately; typically a subset of PCR+
+                            cases.
+                          </p>
+                        )}
+                        {name === 'totalCases' && (
+                          <p className="mt-1 text-xs text-slate-500">
+                            Sum of PCR+ and PCR− (deaths are not added to this
+                            total).
+                          </p>
+                        )}
                         <input
                           id={name}
                           type="number"
@@ -514,9 +536,14 @@ export default function HantavirusPortal() {
                   <SectionHeader
                     n={3}
                     title="Exposure and Contact Information"
-                  />
+                  >
+                    <p className="mt-1 hidden text-sm text-slate-500 sm:block">
+                      Optional — report exposure settings when relevant (all
+                      fields may be left blank).
+                    </p>
+                  </SectionHeader>
 
-                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
                     <div className="rounded-2xl border border-cyan-100/80 bg-gradient-to-b from-cyan-50/60 to-white p-5 sm:p-6">
                       <h4 className="font-semibold text-slate-900">
                         Maritime Exposure (Cruise/Boat)
@@ -606,6 +633,45 @@ export default function HantavirusPortal() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="rounded-2xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/60 to-white p-5 sm:p-6">
+                      <h4 className="font-semibold text-slate-900">
+                        Healthcare Worker Exposure
+                      </h4>
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <label htmlFor="hcwContacts" className={labelClass}>
+                            Contacts (healthcare workers)
+                          </label>
+                          <input
+                            id="hcwContacts"
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            name="hcwContacts"
+                            value={formData.hcwContacts}
+                            onChange={handleChange}
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="hcwExposure" className={labelClass}>
+                            Exposure setting{' '}
+                            <span className="font-normal normal-case text-slate-400">
+                              (optional)
+                            </span>
+                          </label>
+                          <textarea
+                            id="hcwExposure"
+                            rows={3}
+                            name="hcwExposure"
+                            value={formData.hcwExposure}
+                            onChange={handleChange}
+                            className={`${inputClass} resize-y`}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -677,23 +743,43 @@ export default function HantavirusPortal() {
                         </div>
                       )}
 
-                      <div className="max-w-md">
-                        <label
-                          htmlFor="enrolledParticipants"
-                          className={labelClass}
-                        >
-                          Number of enrolled participants
-                        </label>
-                        <input
-                          id="enrolledParticipants"
-                          type="number"
-                          min={0}
-                          inputMode="numeric"
-                          name="enrolledParticipants"
-                          value={formData.enrolledParticipants}
-                          onChange={handleChange}
-                          className={`${inputClass} mt-1`}
-                        />
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="enrolledPcrPositive"
+                            className={labelClass}
+                          >
+                            Number PCR+ enrolled
+                          </label>
+                          <input
+                            id="enrolledPcrPositive"
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            name="enrolledPcrPositive"
+                            value={formData.enrolledPcrPositive}
+                            onChange={handleChange}
+                            className={`${inputClass} mt-1`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="enrolledPcrNegative"
+                            className={labelClass}
+                          >
+                            Number PCR− enrolled
+                          </label>
+                          <input
+                            id="enrolledPcrNegative"
+                            type="number"
+                            min={0}
+                            inputMode="numeric"
+                            name="enrolledPcrNegative"
+                            value={formData.enrolledPcrNegative}
+                            onChange={handleChange}
+                            className={`${inputClass} mt-1`}
+                          />
+                        </div>
                       </div>
                     </fieldset>
                   </div>

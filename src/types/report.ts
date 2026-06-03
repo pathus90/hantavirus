@@ -24,9 +24,14 @@ export type HantavirusReport = {
   boat_exposure: string | null
   airplane_contacts: number | null
   airplane_exposure: string | null
+  contacts_became_cases: number | null
+  hcw_contacts: number | null
+  hcw_exposure: string | null
   ethics_approval: string | null
   ethics_approval_date: string | null
   enrolled_participants: number | null
+  enrolled_pcr_positive: number | null
+  enrolled_pcr_negative: number | null
   created_at: string | null
 }
 
@@ -38,14 +43,18 @@ export type ReportFormData = {
   totalCases: string
   confirmedCases: string
   suspectedCases: string
+  contactsBecameCases: string
   deaths: string
   boatContacts: string
   boatExposure: string
   airplaneContacts: string
   airplaneExposure: string
+  hcwContacts: string
+  hcwExposure: string
   ethicsApproval: EthicsApproval
   ethicsApprovalDate: string
-  enrolledParticipants: string
+  enrolledPcrPositive: string
+  enrolledPcrNegative: string
 }
 
 export const emptyFormData = (): ReportFormData => ({
@@ -56,14 +65,18 @@ export const emptyFormData = (): ReportFormData => ({
   totalCases: '',
   confirmedCases: '',
   suspectedCases: '',
+  contactsBecameCases: '',
   deaths: '',
   boatContacts: '',
   boatExposure: '',
   airplaneContacts: '',
   airplaneExposure: '',
+  hcwContacts: '',
+  hcwExposure: '',
   ethicsApproval: '',
   ethicsApprovalDate: '',
-  enrolledParticipants: '',
+  enrolledPcrPositive: '',
+  enrolledPcrNegative: '',
 })
 
 export const ETHICS_LABELS: Record<string, string> = {
@@ -77,6 +90,13 @@ export const ETHICS_LABELS: Record<string, string> = {
 export const PROTOCOL_LABELS: Record<string, string> = {
   navis: 'NAVIS',
   isaric: 'ISARIC Hantavirus protocol',
+}
+
+export function reportEnrolledTotal(r: HantavirusReport): number {
+  const fromSplit =
+    (r.enrolled_pcr_positive ?? 0) + (r.enrolled_pcr_negative ?? 0)
+  if (fromSplit > 0) return fromSplit
+  return r.enrolled_participants ?? 0
 }
 
 export function reportDeathsTotal(r: HantavirusReport): number {

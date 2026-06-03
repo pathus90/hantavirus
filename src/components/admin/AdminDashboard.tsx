@@ -366,7 +366,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-7">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-8">
               <StatCard label="Reports" value={filtered.length} />
               <StatCard label="Countries" value={countryCases.length} />
               <StatCard label="Total cases" value={sumCases(filtered)} />
@@ -380,9 +380,12 @@ export default function AdminDashboard({ onLogout }: Props) {
               />
               <StatCard label="Deaths" value={sumDeaths(filtered)} />
               <StatCard
-                label="Enrolled"
-                value={sumField(filtered, 'enrolled_participants')}
-                sub="participants"
+                label="Enrolled PCR+"
+                value={sumField(filtered, 'enrolled_pcr_positive')}
+              />
+              <StatCard
+                label="Enrolled PCR−"
+                value={sumField(filtered, 'enrolled_pcr_negative')}
               />
             </div>
 
@@ -775,12 +778,15 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <th className="px-4 py-3 text-right">Total</th>
                       <th className="px-4 py-3 text-right">PCR+</th>
                       <th className="px-4 py-3 text-right">PCR−</th>
+                      <th className="px-4 py-3 text-right">PCR−→+</th>
                       <th className="px-4 py-3 text-right">Deaths</th>
                       <th className="px-4 py-3 text-right">Boat</th>
                       <th className="px-4 py-3 text-right">Air</th>
+                      <th className="px-4 py-3 text-right">HCW</th>
                       <th className="px-4 py-3">Ethics</th>
                       <th className="px-4 py-3">Ethics date</th>
-                      <th className="px-4 py-3 text-right">Enrolled</th>
+                      <th className="px-4 py-3 text-right">Enr. PCR+</th>
+                      <th className="px-4 py-3 text-right">Enr. PCR−</th>
                       <th className="px-4 py-3">Submitted</th>
                     </tr>
                   </thead>
@@ -814,6 +820,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmt(r.suspected_cases)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {fmt(r.contacts_became_cases)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(reportDeathsTotal(r) || null)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
@@ -822,6 +831,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.airplane_contacts)}
                           </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {fmt(r.hcw_contacts)}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3">
                             {fmtEthics(r.ethics_approval)}
                           </td>
@@ -829,7 +841,10 @@ export default function AdminDashboard({ onLogout }: Props) {
                             {fmtDate(r.ethics_approval_date)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {fmt(r.enrolled_participants)}
+                            {fmt(r.enrolled_pcr_positive)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {fmt(r.enrolled_pcr_negative)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-500">
                             {fmtDate(r.created_at)}
@@ -837,8 +852,8 @@ export default function AdminDashboard({ onLogout }: Props) {
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={14} className="px-4 py-4">
-                              <div className="grid gap-4 sm:grid-cols-2">
+                            <td colSpan={17} className="px-4 py-4">
+                              <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">
                                     Maritime exposure
@@ -853,6 +868,14 @@ export default function AdminDashboard({ onLogout }: Props) {
                                   </p>
                                   <p className="mt-2 text-sm text-slate-700">
                                     {fmt(r.airplane_exposure)}
+                                  </p>
+                                </div>
+                                <div className="rounded-xl border border-emerald-100 bg-white p-4">
+                                  <p className="text-xs font-semibold uppercase text-emerald-800">
+                                    Healthcare worker exposure
+                                  </p>
+                                  <p className="mt-2 text-sm text-slate-700">
+                                    {fmt(r.hcw_exposure)}
                                   </p>
                                 </div>
                               </div>
