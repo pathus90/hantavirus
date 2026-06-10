@@ -81,10 +81,7 @@ export const PROTOCOL_LABELS: Record<string, string> = {
 }
 
 export function reportEnrolledTotal(r: HantavirusReport): number {
-  const fromSplit =
-    (r.enrolled_pcr_positive ?? 0) + (r.enrolled_pcr_negative ?? 0)
-  if (fromSplit > 0) return fromSplit
-  return r.enrolled_participants ?? 0
+  return (r.enrolled_pcr_positive ?? 0) + (r.enrolled_pcr_negative ?? 0)
 }
 
 export function reportDeathsTotal(r: HantavirusReport): number {

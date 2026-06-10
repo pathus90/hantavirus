@@ -254,6 +254,13 @@ export default function HantavirusPortal() {
     [formData.confirmedCases, formData.suspectedCases],
   )
 
+  const computedTotalEnrolled = useMemo(
+    () =>
+      toNumber(formData.enrolledPcrPositive) +
+      toNumber(formData.enrolledPcrNegative),
+    [formData.enrolledPcrPositive, formData.enrolledPcrNegative],
+  )
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -679,42 +686,38 @@ export default function HantavirusPortal() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                          <label
-                            htmlFor="enrolledPcrPositive"
-                            className={labelClass}
-                          >
-                            Number PCR+ enrolled
-                          </label>
-                          <input
+                      <div className={`${fieldCardClass} sm:col-span-2`}>
+                        <span className={labelClass}>Enrolled participants</span>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <FormNumberField
                             id="enrolledPcrPositive"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
                             name="enrolledPcrPositive"
+                            label="Enrolled PCR+"
                             value={formData.enrolledPcrPositive}
                             onChange={handleChange}
-                            className={inputClass}
+                            className="border-0 bg-transparent p-0"
                           />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="enrolledPcrNegative"
-                            className={labelClass}
-                          >
-                            Number PCR− enrolled
-                          </label>
-                          <input
+                          <FormNumberField
                             id="enrolledPcrNegative"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
                             name="enrolledPcrNegative"
+                            label="Enrolled PCR−"
                             value={formData.enrolledPcrNegative}
                             onChange={handleChange}
-                            className={inputClass}
+                            className="border-0 bg-transparent p-0"
                           />
+                        </div>
+                        <div className="mt-4 border-t border-slate-100 pt-4">
+                          <span className={labelClass}>Total enrolled</span>
+                          <p className={hintClass}>
+                            Enrolled PCR+ + Enrolled PCR−
+                          </p>
+                          <output
+                            htmlFor="enrolledPcrPositive enrolledPcrNegative"
+                            className={`${inputClass} block bg-slate-50 tabular-nums text-slate-900`}
+                            aria-live="polite"
+                          >
+                            {computedTotalEnrolled}
+                          </output>
                         </div>
                       </div>
                     </fieldset>

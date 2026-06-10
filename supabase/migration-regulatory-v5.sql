@@ -1,8 +1,13 @@
 -- Total cases = confirmed (PCR+) + contacts (PCR−) only.
+-- Enrolled total = enrolled PCR+ + enrolled PCR−.
 -- Run after migration-regulatory-v4.sql
 
 update public.hantavirus_reports
 set total_cases = coalesce(confirmed_cases, 0) + coalesce(suspected_cases, 0);
+
+update public.hantavirus_reports
+set enrolled_participants =
+  coalesce(enrolled_pcr_positive, 0) + coalesce(enrolled_pcr_negative, 0);
 
 do $$
 declare
