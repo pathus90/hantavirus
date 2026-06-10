@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import {
   reportCasesTotal,
@@ -142,6 +143,79 @@ export function exportEthicsCsv(slices: EthicsSlice[]) {
   downloadCsv(`${exportBasename()}-ethics`, ethicsRows(slices))
 }
 
+export function enrolledRows(rows: CountryCaseRow[]) {
+  return rows
+    .filter((r) => r.enrolled > 0)
+    .map((r) => ({
+      Country: r.country,
+      'Enrolled PCR+': r.enrolledPcrPositive,
+      'Enrolled PCR−': r.enrolledPcrNegative,
+      'Enrolled (total)': r.enrolled,
+    }))
+}
+
+export function exportCountryCasesExcel(rows: CountryCaseRow[]) {
+  downloadExcel(`${exportBasename()}-cases-by-country`, [
+    { name: 'Cases by country', rows: countryCaseRows(rows) },
+  ])
+}
+
+export function exportTimelineExcel(points: TimelinePoint[]) {
+  downloadExcel(`${exportBasename()}-submissions-timeline`, [
+    { name: 'Submissions timeline', rows: timelineRows(points) },
+  ])
+}
+
+export function exportEthicsExcel(slices: EthicsSlice[]) {
+  downloadExcel(`${exportBasename()}-ethics`, [
+    { name: 'Ethics approval', rows: ethicsRows(slices) },
+  ])
+}
+
+export function exportEnrolledCsv(rows: CountryCaseRow[]) {
+  downloadCsv(`${exportBasename()}-enrolled-by-country`, enrolledRows(rows))
+}
+
+export function exportEnrolledExcel(rows: CountryCaseRow[]) {
+  downloadExcel(`${exportBasename()}-enrolled-by-country`, [
+    { name: 'Enrolled by country', rows: enrolledRows(rows) },
+  ])
+}
+
+export async function exportChartPng(
+  container: HTMLElement | null,
+  chartSlug: string,
+) {
+  if (!container) return
+
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  })
+
+  const canvas = await html2canvas(container, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    logging: false,
+    useCORS: true,
+    foreignObjectRendering: true,
+    onclone: (_doc, element) => {
+      element.querySelectorAll('svg').forEach((svg) => {
+        const box = svg.getBoundingClientRect()
+        if (box.width > 0 && box.height > 0) {
+          svg.setAttribute('width', String(Math.ceil(box.width)))
+          svg.setAttribute('height', String(Math.ceil(box.height)))
+        }
+      })
+    },
+  })
+
+  canvas.toBlob((blob) => {
+    if (blob) {
+      triggerDownload(blob, `${exportBasename()}-${chartSlug}.png`)
+    }
+  }, 'image/png')
+}
+
 export function exportAllExcel(
   reports: HantavirusReport[],
   countryCases: CountryCaseRow[],
@@ -153,6 +227,7 @@ export function exportAllExcel(
     { name: 'Cases by country', rows: countryCaseRows(countryCases) },
     { name: 'Submissions timeline', rows: timelineRows(timeline) },
     { name: 'Ethics approval', rows: ethicsRows(ethics) },
+    { name: 'Enrolled by country', rows: enrolledRows(countryCases) },
   ])
 }
 

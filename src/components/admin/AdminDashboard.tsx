@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Bar,
@@ -21,11 +21,17 @@ import type { HantavirusReport } from '../../types/report'
 import { reportCasesTotal } from '../../types/report'
 import {
   exportAllExcel,
+  exportChartPng,
   exportCountryCasesCsv,
+  exportCountryCasesExcel,
+  exportEnrolledCsv,
+  exportEnrolledExcel,
   exportEthicsCsv,
+  exportEthicsExcel,
   exportReportsCsv,
   exportReportsExcel,
   exportTimelineCsv,
+  exportTimelineExcel,
 } from './adminExport'
 import {
   casesByCountry,
@@ -122,16 +128,62 @@ function ChartCard({
   title,
   children,
   className = '',
+  onExportCsv,
+  onExportExcel,
+  onExportPng,
+  exportDisabled = false,
 }: {
   title: string
   children: React.ReactNode
   className?: string
+  onExportCsv?: () => void
+  onExportExcel?: () => void
+  onExportPng?: () => void
+  exportDisabled?: boolean
 }) {
+  const hasExport = onExportCsv || onExportExcel || onExportPng
+
   return (
     <div
       className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}
     >
-      <h3 className="mb-4 text-sm font-semibold text-slate-800">{title}</h3>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        {hasExport ? (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {onExportCsv ? (
+              <button
+                type="button"
+                className={exportBtnClass}
+                disabled={exportDisabled}
+                onClick={onExportCsv}
+              >
+                Export CSV
+              </button>
+            ) : null}
+            {onExportExcel ? (
+              <button
+                type="button"
+                className={exportBtnClass}
+                disabled={exportDisabled}
+                onClick={onExportExcel}
+              >
+                Export Excel
+              </button>
+            ) : null}
+            {onExportPng ? (
+              <button
+                type="button"
+                className={exportBtnClass}
+                disabled={exportDisabled}
+                onClick={onExportPng}
+              >
+                Export PNG
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       {children}
     </div>
   )
@@ -143,6 +195,10 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<AdminFilters>(emptyAdminFilters())
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const casesChartRef = useRef<HTMLDivElement>(null)
+  const timelineChartRef = useRef<HTMLDivElement>(null)
+  const ethicsChartRef = useRef<HTMLDivElement>(null)
+  const enrolledChartRef = useRef<HTMLDivElement>(null)
 
   const fetchReports = useCallback(async () => {
     setLoading(true)
@@ -177,6 +233,10 @@ export default function AdminDashboard({ onLogout }: Props) {
   const countryCases = useMemo(() => casesByCountry(filtered), [filtered])
   const ethicsData = useMemo(() => ethicsBreakdown(filtered), [filtered])
   const timeline = useMemo(() => submissionsTimeline(filtered), [filtered])
+  const enrolledCases = useMemo(
+    () => countryCases.filter((c) => c.enrolled > 0),
+    [countryCases],
+  )
 
   const hasActiveFilters =
     filters.country ||
@@ -413,7 +473,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                     Excel (.xlsx) — all sheets
                   </button>
                 </div>
-                <div className="grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                   <div>
                     <p className="mb-2 text-xs font-semibold text-slate-700">Reports</p>
                     <div className="flex flex-wrap gap-2">
@@ -471,17 +531,40 @@ export default function AdminDashboard({ onLogout }: Props) {
                       CSV
                     </button>
                   </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-slate-700">
+                      Enrolled by country
+                    </p>
+                    <button
+                      type="button"
+                      className={exportBtnClass}
+                      onClick={() => exportEnrolledCsv(countryCases)}
+                      disabled={enrolledCases.length === 0}
+                    >
+                      CSV
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Charts */}
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              <ChartCard title="Cases by country" className="xl:col-span-2">
+              <ChartCard
+                title="Cases by country"
+                className="xl:col-span-2"
+                onExportCsv={() => exportCountryCasesCsv(countryCases)}
+                onExportExcel={() => exportCountryCasesExcel(countryCases)}
+                onExportPng={() =>
+                  void exportChartPng(casesChartRef.current, 'cases-by-country')
+                }
+                exportDisabled={countryCases.length === 0}
+              >
                 <p className="-mt-2 mb-3 text-xs text-slate-500">
                   Aggregated case counts per country (filtered reports).
                 </p>
-                <div className="h-80 w-full">
+                <div ref={casesChartRef} className="rounded-xl bg-white">
+                  <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={countryCases}
@@ -570,13 +653,26 @@ export default function AdminDashboard({ onLogout }: Props) {
                     },
                   ]}
                 />
+                </div>
               </ChartCard>
 
-              <ChartCard title="Submissions over time">
+              <ChartCard
+                title="Submissions over time"
+                onExportCsv={() => exportTimelineCsv(timeline)}
+                onExportExcel={() => exportTimelineExcel(timeline)}
+                onExportPng={() =>
+                  void exportChartPng(
+                    timelineChartRef.current,
+                    'submissions-timeline',
+                  )
+                }
+                exportDisabled={timeline.length === 0}
+              >
                 <p className="-mt-2 mb-3 text-xs text-slate-500">
                   Number of reports submitted per report date.
                 </p>
-                <div className="h-64 w-full">
+                <div ref={timelineChartRef} className="rounded-xl bg-white">
+                  <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={timeline}
@@ -632,13 +728,23 @@ export default function AdminDashboard({ onLogout }: Props) {
                     },
                   ]}
                 />
+                </div>
               </ChartCard>
 
-              <ChartCard title="Ethics approval status">
+              <ChartCard
+                title="Ethics approval status"
+                onExportCsv={() => exportEthicsCsv(ethicsData)}
+                onExportExcel={() => exportEthicsExcel(ethicsData)}
+                onExportPng={() =>
+                  void exportChartPng(ethicsChartRef.current, 'ethics-approval')
+                }
+                exportDisabled={ethicsData.length === 0}
+              >
                 <p className="-mt-2 mb-3 text-xs text-slate-500">
                   Distribution of ethics approval answers across filtered reports.
                 </p>
-                <div className="h-64 w-full">
+                <div ref={ethicsChartRef} className="rounded-xl bg-white">
+                  <div className="h-64 w-full">
                   {ethicsData.length === 0 ? (
                     <p className="flex h-full items-center justify-center text-sm text-slate-400">
                       No ethics data
@@ -675,16 +781,30 @@ export default function AdminDashboard({ onLogout }: Props) {
                     }))}
                   />
                 )}
+                </div>
               </ChartCard>
 
-              <ChartCard title="Enrolled participants by country" className="xl:col-span-2">
+              <ChartCard
+                title="Enrolled participants by country"
+                className="xl:col-span-2"
+                onExportCsv={() => exportEnrolledCsv(countryCases)}
+                onExportExcel={() => exportEnrolledExcel(countryCases)}
+                onExportPng={() =>
+                  void exportChartPng(
+                    enrolledChartRef.current,
+                    'enrolled-by-country',
+                  )
+                }
+                exportDisabled={enrolledCases.length === 0}
+              >
                 <p className="-mt-2 mb-3 text-xs text-slate-500">
                   Countries with at least one enrolled participant (filtered data).
                 </p>
-                <div className="h-64 w-full">
+                <div ref={enrolledChartRef} className="rounded-xl bg-white">
+                  <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={countryCases.filter((c) => c.enrolled > 0)}
+                      data={enrolledCases}
                       layout="vertical"
                       margin={{ top: 8, right: 16, left: 8, bottom: 28 }}
                     >
@@ -737,6 +857,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                     },
                   ]}
                 />
+                </div>
               </ChartCard>
             </div>
 

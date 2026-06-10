@@ -1,7 +1,5 @@
 export type StudyProtocol = 'navis' | 'isaric'
 
-export type DeathCategory = '' | 'pcr_positive' | 'pcr_negative'
-
 export type EthicsApproval =
   | ''
   | 'in_preparation'
@@ -46,8 +44,8 @@ export type ReportFormData = {
   confirmedCases: string
   suspectedCases: string
   contactsBecameCases: string
-  deathsCount: string
-  deathsCategory: DeathCategory
+  deathsCases: string
+  deathsContacts: string
   ethicsApproval: EthicsApproval
   ethicsApprovalDate: string
   enrolledPcrPositive: string
@@ -63,8 +61,8 @@ export const emptyFormData = (): ReportFormData => ({
   confirmedCases: '',
   suspectedCases: '',
   contactsBecameCases: '',
-  deathsCount: '',
-  deathsCategory: '',
+  deathsCases: '',
+  deathsContacts: '',
   ethicsApproval: '',
   ethicsApprovalDate: '',
   enrolledPcrPositive: '',

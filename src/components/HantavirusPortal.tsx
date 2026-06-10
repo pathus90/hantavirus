@@ -28,8 +28,6 @@ const hintClass = 'mb-2 text-xs leading-relaxed text-slate-500'
 const fieldCardClass =
   'flex flex-col rounded-xl border border-slate-100 bg-slate-50/50 p-4'
 
-const subLabelClass = 'mb-2 block text-xs font-medium text-slate-600'
-
 function FormNumberField({
   id,
   name,
@@ -314,24 +312,6 @@ export default function HantavirusPortal() {
       return
     }
 
-    if (formData.ethicsApproval === 'approved' && !formData.ethicsApprovalDate) {
-      setError('Please enter the ethics approval date.')
-      setLoading(false)
-      return
-    }
-
-    const deathsCount = toNumber(formData.deathsCount)
-    if (deathsCount > 0 && !formData.deathsCategory) {
-      setError('Please select whether deaths are among PCR+ or PCR− cases.')
-      setLoading(false)
-      return
-    }
-
-    const pDeathsCases =
-      formData.deathsCategory === 'pcr_positive' ? deathsCount : 0
-    const pDeathsContacts =
-      formData.deathsCategory === 'pcr_negative' ? deathsCount : 0
-
     const { data, error: submitError } = await supabase.rpc(
       'submit_hantavirus_report',
       {
@@ -344,8 +324,8 @@ export default function HantavirusPortal() {
         p_total_cases: toNumber(formData.totalCases),
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
-        p_deaths_cases: pDeathsCases,
-        p_deaths_contacts: pDeathsContacts,
+        p_deaths_cases: toNumber(formData.deathsCases),
+        p_deaths_contacts: toNumber(formData.deathsContacts),
         p_contacts_became_cases: toNumber(formData.contactsBecameCases),
         p_boat_contacts: 0,
         p_boat_exposure: null,
@@ -354,10 +334,7 @@ export default function HantavirusPortal() {
         p_hcw_contacts: 0,
         p_hcw_exposure: null,
         p_ethics_approval: formData.ethicsApproval || null,
-        p_ethics_approval_date:
-          formData.ethicsApproval === 'approved'
-            ? formData.ethicsApprovalDate || null
-            : null,
+        p_ethics_approval_date: formData.ethicsApprovalDate || null,
         p_enrolled_pcr_positive: toNumber(formData.enrolledPcrPositive),
         p_enrolled_pcr_negative: toNumber(formData.enrolledPcrNegative),
       },
@@ -611,37 +588,28 @@ export default function HantavirusPortal() {
                     <div className={`${fieldCardClass} sm:col-span-2`}>
                       <span className={labelClass}>Deaths</span>
                       <p className={hintClass}>
-                        Reported separately from the total. Select PCR status,
-                        then enter the number of deaths.
+                        Reported separately from the total (not included in the
+                        PCR+ / PCR− sum above).
                       </p>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_8.5rem] sm:items-end">
-                        <ChoiceGroup
-                          legend="PCR status"
-                          name="deathsCategory"
-                          value={formData.deathsCategory}
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormNumberField
+                          id="deathsCases"
+                          name="deathsCases"
+                          label="PCR+ (confirmed cases)"
+                          hint="Count"
+                          value={formData.deathsCases}
                           onChange={handleChange}
-                          options={[
-                            ['pcr_positive', 'PCR+ (confirmed cases)'],
-                            ['pcr_negative', 'PCR− (contacts)'],
-                          ]}
-                          columns={2}
-                          legendClass={subLabelClass}
+                          className="border-0 bg-transparent p-0"
                         />
-                        <div>
-                          <label htmlFor="deathsCount" className={subLabelClass}>
-                            Count
-                          </label>
-                          <input
-                            id="deathsCount"
-                            type="number"
-                            min={0}
-                            inputMode="numeric"
-                            name="deathsCount"
-                            value={formData.deathsCount}
-                            onChange={handleChange}
-                            className={`${inputClass} bg-white`}
-                          />
-                        </div>
+                        <FormNumberField
+                          id="deathsContacts"
+                          name="deathsContacts"
+                          label="PCR− (contacts)"
+                          hint="Count"
+                          value={formData.deathsContacts}
+                          onChange={handleChange}
+                          className="border-0 bg-transparent p-0"
+                        />
                       </div>
                     </div>
 
@@ -683,12 +651,14 @@ export default function HantavirusPortal() {
                             htmlFor="ethicsApprovalDate"
                             className={labelClass}
                           >
-                            Ethics approval date
+                            Ethics approval date{' '}
+                            <span className="font-normal normal-case text-slate-400">
+                              (optional)
+                            </span>
                           </label>
                           <DatePicker
                             id="ethicsApprovalDate"
                             name="ethicsApprovalDate"
-                            required
                             value={formData.ethicsApprovalDate}
                             onChange={handleChange}
                             placeholder="Select approval date…"
