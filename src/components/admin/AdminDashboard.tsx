@@ -18,7 +18,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import DatePicker from '../DatePicker'
 import type { HantavirusReport } from '../../types/report'
-import { reportCasesTotal } from '../../types/report'
+import { reportCasesTotal, reportEnrolledTotal } from '../../types/report'
 import {
   exportAllExcel,
   exportChartPng,
@@ -45,6 +45,7 @@ import {
   submissionsTimeline,
   sumCases,
   sumDeaths,
+  sumEnrolled,
   sumField,
   uniqueCountries,
   type AdminFilters,
@@ -426,7 +427,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-8">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-9">
               <StatCard label="Reports" value={filtered.length} />
               <StatCard label="Countries" value={countryCases.length} />
               <StatCard label="Total cases" value={sumCases(filtered)} />
@@ -439,6 +440,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                 value={sumField(filtered, 'suspected_cases')}
               />
               <StatCard label="Deaths" value={sumDeaths(filtered)} />
+              <StatCard label="Total enrolled" value={sumEnrolled(filtered)} />
               <StatCard
                 label="Enrolled PCR+"
                 value={sumField(filtered, 'enrolled_pcr_positive')}
@@ -909,6 +911,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <th className="px-4 py-3">Ethics date</th>
                       <th className="px-4 py-3 text-right">Enr. PCR+</th>
                       <th className="px-4 py-3 text-right">Enr. PCR−</th>
+                      <th className="px-4 py-3 text-right">Enr. total</th>
                       <th className="px-4 py-3">Submitted</th>
                     </tr>
                   </thead>
@@ -971,13 +974,16 @@ export default function AdminDashboard({ onLogout }: Props) {
                           <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                             {fmt(r.enrolled_pcr_negative)}
                           </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums font-medium text-indigo-900">
+                            {fmt(reportEnrolledTotal(r))}
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-500">
                             {fmtDate(r.created_at)}
                           </td>
                         </tr>
                         {expandedId === r.id && (
                           <tr key={`${r.id}-detail`} className="bg-slate-50/80">
-                            <td colSpan={18} className="px-4 py-4">
+                            <td colSpan={19} className="px-4 py-4">
                               <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="rounded-xl border border-cyan-100 bg-white p-4">
                                   <p className="text-xs font-semibold uppercase text-cyan-800">

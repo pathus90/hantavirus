@@ -73,6 +73,10 @@ export function sumDeaths(reports: HantavirusReport[]): number {
   return reports.reduce((s, r) => s + reportDeathsTotal(r), 0)
 }
 
+export function sumEnrolled(reports: HantavirusReport[]): number {
+  return reports.reduce((s, r) => s + reportEnrolledTotal(r), 0)
+}
+
 export type CountryCaseRow = {
   country: string
   total: number
