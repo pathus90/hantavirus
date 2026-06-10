@@ -1,4 +1,8 @@
--- Deaths split by PCR status (form dropdown). Run after migration-regulatory-v3.sql
+-- Total cases = confirmed (PCR+) + contacts (PCR−) only.
+-- Run after migration-regulatory-v4.sql
+
+update public.hantavirus_reports
+set total_cases = coalesce(confirmed_cases, 0) + coalesce(suspected_cases, 0);
 
 do $$
 declare

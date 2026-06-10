@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ADDITIONAL_PARTICIPATING_COUNTRIES,
@@ -249,6 +249,11 @@ export default function HantavirusPortal() {
 
   const isOtherCountry = formData.country === OTHER_COUNTRY_VALUE
 
+  const computedTotalCases = useMemo(
+    () => toNumber(formData.confirmedCases) + toNumber(formData.suspectedCases),
+    [formData.confirmedCases, formData.suspectedCases],
+  )
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -321,7 +326,7 @@ export default function HantavirusPortal() {
         p_institution: null,
         p_focal_point: null,
         p_contact: null,
-        p_total_cases: toNumber(formData.totalCases),
+        p_total_cases: computedTotalCases,
         p_confirmed_cases: toNumber(formData.confirmedCases),
         p_suspected_cases: toNumber(formData.suspectedCases),
         p_deaths_cases: toNumber(formData.deathsCases),
@@ -613,15 +618,22 @@ export default function HantavirusPortal() {
                       </div>
                     </div>
 
-                    <FormNumberField
-                      id="totalCases"
-                      name="totalCases"
-                      label="Total (PCR+ plus PCR−)"
-                      hint="Sum of PCR+ and PCR− (deaths are not added to this total)."
-                      value={formData.totalCases}
-                      onChange={handleChange}
-                      className="sm:col-span-2 sm:max-w-sm sm:justify-self-end"
-                    />
+                    <div
+                      className={`${fieldCardClass} sm:col-span-2 sm:max-w-sm sm:justify-self-end`}
+                    >
+                      <span className={labelClass}>Total cases</span>
+                      <p className={hintClass}>
+                        Confirmed (PCR+) + Contacts (PCR−). Deaths are not
+                        included.
+                      </p>
+                      <output
+                        htmlFor="confirmedCases suspectedCases"
+                        className={`${inputClass} block bg-slate-50 tabular-nums text-slate-900`}
+                        aria-live="polite"
+                      >
+                        {computedTotalCases}
+                      </output>
+                    </div>
                   </div>
                 </section>
 
